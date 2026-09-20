@@ -327,7 +327,6 @@ function fracHTML(n, d){
   if(window.mathJaxReady) return `\\(\\dfrac{${n}}{${d}}\\)`;
   return `<span class="inline-frac"><span class="num">${n}</span><span class="bar"></span><span class="den">${d}</span></span>`;
 }
-function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a||1; }
 
 /* ───────────────────────── STEP 1: theoretical probability ───────────────────────── */
 const FACES = [1,2,3,4,5,6];
@@ -538,8 +537,6 @@ function checkAnswer(n){
   const num = parseFloat(numEl.value);
   const den = parseFloat(denEl.value);
   const freq = counts[n];
-  const g = gcd(freq, total);
-  const rn = freq/g, rd = total/g;
 
   if(isNaN(num) || isNaN(den) || den <= 0){
     box.classList.remove('ok'); box.classList.add('bad');
@@ -549,12 +546,13 @@ function checkAnswer(n){
     return;
   }
 
-  const correct = Math.abs((num/den) - (freq/total)) < 0.005;
+  // Require an exact match (frequency / total trials), not just a numerically
+  // equivalent fraction — otherwise e.g. 0/11 would wrongly pass as "correct"
+  // whenever the frequency is 0, since 0/anything reduces to 0.
+  const correct = num === freq && den === total;
   if(correct){
     box.classList.remove('bad'); box.classList.add('ok');
-    fb.innerHTML = (rn===freq && rd===total)
-      ? `✔ Correct! Experimental probability = ${fracHTML(freq,total)}`
-      : `✔ Correct! Experimental probability = ${fracHTML(freq,total)} = ${fracHTML(rn,rd)}`;
+    fb.innerHTML = `✔ Correct! Experimental probability = ${fracHTML(freq,total)}`;
     fb.className = 'fb-cell fb-ok';
     sfxCorrect();
   } else {
@@ -587,7 +585,7 @@ document.getElementById('checkAllBtn').addEventListener('click', ()=>{
       anyAnswered = true;
       checkAnswer(n);
       const num = parseFloat(numEl.value), den = parseFloat(denEl.value);
-      if(isNaN(num) || isNaN(den) || den<=0 || total===0 || Math.abs((num/den)-(counts[n]/total)) >= 0.005){
+      if(isNaN(num) || isNaN(den) || den<=0 || total===0 || num!==counts[n] || den!==total){
         allCorrect = false;
       }
     } else {
