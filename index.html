@@ -158,7 +158,6 @@ table.results td:last-child{border-radius:0 10px 10px 0;border-left:1px solid va
   height:3px;background:var(--danger);transform:translateY(-50%) rotate(-32deg);border-radius:2px}
 .tally-empty{color:#b7c8d6;font-size:12px}
 .count-badge{display:inline-block;min-width:26px;font-weight:800;color:var(--teal)}
-.frac-box.single{padding:6px 14px}
 .mini-check{border:none;border-radius:8px;padding:6px 10px;font-size:11.5px;font-weight:700;
             cursor:pointer;background:var(--info);color:#fff}
 .total-row td{background:#f0d06022;font-weight:800;border-top:2px solid var(--gold)}
@@ -242,13 +241,13 @@ table.results td:last-child{border-radius:0 10px 10px 0;border-left:1px solid va
     </div>
   </div>
 
-  <!-- STEP 3: Results table -->
+  <!-- STEP 3: Results table + experimental probability -->
   <div class="card">
-    <h2><span class="step-badge">3</span> جدول العدّ التكراري (Tally) وتحقّق من عدّك</h2>
-    <p class="hint">لاحظ كيف تُرسم الشرطات: أربع شرطات رأسية ثم شرطة مائلة تقطعها لتمثّل المجموعة الخامسة (////). اقرأ كل صف واكتب العدد الذي تراه ثم اضغط «تحقق».</p>
+    <h2><span class="step-badge">3</span> جدول العدّ التكراري (Tally) واحسب الاحتمال التجريبي</h2>
+    <p class="hint">لاحظ كيف تُرسم الشرطات: أربع شرطات رأسية ثم شرطة مائلة تقطعها لتمثّل المجموعة الخامسة (////). اقرأ كل صف ثم اكتب الاحتمال التجريبي لكل حدث على صورة كسر (التكرار ÷ عدد التجارب الكلي) واضغط «تحقق».</p>
     <table class="results">
       <thead>
-        <tr><th>الحدث</th><th>العدّ التكراري (Tally)</th><th>عدّك للنتيجة</th><th></th><th>التكرار الفعلي</th></tr>
+        <tr><th>الحدث</th><th>العدّ التكراري (Tally)</th><th>الاحتمال التجريبي (كسر)</th><th></th><th>الملاحظة</th></tr>
       </thead>
       <tbody id="resultsBody"></tbody>
       <tfoot>
@@ -263,18 +262,6 @@ table.results td:last-child{border-radius:0 10px 10px 0;border-left:1px solid va
       <button class="big-btn" id="checkAllBtn">✅ تحقق من كل الإجابات دفعة واحدة</button>
       <span class="total-check-msg" id="totalCheckMsg"></span>
     </div>
-  </div>
-
-  <!-- STEP 4: Experimental probability -->
-  <div class="card">
-    <h2><span class="step-badge">4</span> احسب الاحتمال التجريبي لكل حدث</h2>
-    <p class="hint">الاحتمال التجريبي = التكرار الفعلي ÷ عدد التجارب الكلي. أدخله على صورة كسر رياضي (بسط/مقام) ثم اضغط «تحقق» لمقارنته بالاحتمال النظري (1/6).</p>
-    <table class="prob">
-      <thead>
-        <tr><th>الحدث</th><th>التكرار الفعلي</th><th>الاحتمال التجريبي (كسر)</th><th></th><th>الملاحظة</th></tr>
-      </thead>
-      <tbody id="expBody"></tbody>
-    </table>
   </div>
 
 </div>
@@ -486,7 +473,7 @@ function rollDice(){
 }
 rollBtn.addEventListener('click', rollDice);
 
-/* ───────────────────────── STEP 3: tally / results table ───────────────────────── */
+/* ───────────────────────── STEP 3: tally table + experimental probability ───────────────────────── */
 const resultsBody = document.getElementById('resultsBody');
 FACES.forEach(n=>{
   const tr = document.createElement('tr');
@@ -494,12 +481,14 @@ FACES.forEach(n=>{
     <td><span class="face-chip">${n}</span></td>
     <td><div class="tally-cell" id="tally-${n}"><span class="tally-empty">لا نتائج بعد</span></div></td>
     <td>
-      <div class="frac-box single" id="ansbox-${n}">
-        <input type="number" class="frac-num" min="0" id="ans-${n}" placeholder="••" inputmode="numeric">
+      <div class="frac-box" id="ansbox-${n}">
+        <input type="number" class="frac-num" id="ans-${n}-num" min="0" placeholder="••" inputmode="numeric">
+        <div class="frac-bar"></div>
+        <input type="number" class="frac-den" id="ans-${n}-den" min="1" placeholder="••" inputmode="numeric">
       </div>
     </td>
     <td><button class="mini-check" data-n="${n}">تحقق</button></td>
-    <td><span class="count-badge" id="real-${n}" style="visibility:hidden">0</span></td>
+    <td class="fb-cell" id="ansfb-${n}"></td>
   `;
   resultsBody.appendChild(tr);
 });
@@ -527,76 +516,20 @@ function renderResults(){
   totalRollsEl.textContent = total;
   document.getElementById('footTotal').textContent = total;
   document.getElementById('totalTally').innerHTML = `<span class="count-badge">${total}</span> رمية`;
-  FACES.forEach(n=>{
-    const el = document.getElementById(`expfreq-${n}`);
-    if(el) el.textContent = counts[n];
-  });
 }
 renderResults();
 
 function checkAnswer(n){
-  const input = document.getElementById(`ans-${n}`);
-  const box = document.getElementById(`ansbox-${n}`);
-  const realEl = document.getElementById(`real-${n}`);
-  sfxClick();
-  const val = parseInt(input.value,10);
-  if(isNaN(val)){
-    box.classList.add('bad'); box.classList.remove('ok');
-    sfxWrong();
-    return;
-  }
-  if(val === counts[n]){
-    box.classList.add('ok'); box.classList.remove('bad');
-    sfxCorrect();
-  } else {
-    box.classList.add('bad'); box.classList.remove('ok');
-    sfxWrong();
-  }
-  realEl.textContent = counts[n];
-  realEl.style.visibility = 'visible';
-}
-resultsBody.addEventListener('click', e=>{
-  const btn = e.target.closest('.mini-check');
-  if(btn) checkAnswer(btn.dataset.n);
-});
-resultsBody.addEventListener('keydown', e=>{
-  if(e.key==='Enter' && e.target.classList.contains('frac-num')){
-    const n = e.target.id.split('-')[1];
-    checkAnswer(n);
-  }
-});
-
-/* ───────────────────────── STEP 4: experimental probability ───────────────────────── */
-const expBody = document.getElementById('expBody');
-FACES.forEach(n=>{
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td><span class="face-chip">${n}</span></td>
-    <td><span class="count-badge" id="expfreq-${n}">0</span></td>
-    <td>
-      <div class="frac-box" id="exp-${n}">
-        <input type="number" class="frac-num" id="exp-${n}-num" min="0" placeholder="••" inputmode="numeric">
-        <div class="frac-bar"></div>
-        <input type="number" class="frac-den" id="exp-${n}-den" min="1" placeholder="••" inputmode="numeric">
-      </div>
-    </td>
-    <td><button class="check-btn" data-n="${n}">تحقق</button></td>
-    <td class="fb-cell" id="expfb-${n}"></td>
-  `;
-  expBody.appendChild(tr);
-});
-
-function checkExp(n){
   const total = FACES.reduce((s,f)=>s+counts[f],0);
-  const box = document.getElementById(`exp-${n}`);
-  const numEl = document.getElementById(`exp-${n}-num`);
-  const denEl = document.getElementById(`exp-${n}-den`);
-  const fb = document.getElementById(`expfb-${n}`);
+  const box = document.getElementById(`ansbox-${n}`);
+  const numEl = document.getElementById(`ans-${n}-num`);
+  const denEl = document.getElementById(`ans-${n}-den`);
+  const fb = document.getElementById(`ansfb-${n}`);
   sfxClick();
 
   if(total === 0){
     box.classList.remove('ok'); box.classList.add('bad');
-    fb.innerHTML = '⚠️ ارمِ النرد عدة مرات أولًا (الخطوة 2) قبل حساب الاحتمال التجريبي.';
+    fb.innerHTML = '⚠️ ارمِ النرد عدة مرات أولًا (الخطوة 2).';
     fb.className = 'fb-cell fb-bad';
     typesetEl(fb); sfxWrong();
     return;
@@ -632,36 +565,40 @@ function checkExp(n){
   }
   typesetEl(fb);
 }
-expBody.addEventListener('click', e=>{
-  const btn = e.target.closest('.check-btn');
-  if(btn) checkExp(btn.dataset.n);
+resultsBody.addEventListener('click', e=>{
+  const btn = e.target.closest('.mini-check');
+  if(btn) checkAnswer(btn.dataset.n);
 });
-expBody.addEventListener('keydown', e=>{
+resultsBody.addEventListener('keydown', e=>{
   if(e.key==='Enter' && (e.target.classList.contains('frac-num') || e.target.classList.contains('frac-den'))){
     const n = e.target.id.split('-')[1];
-    checkExp(n);
+    checkAnswer(n);
   }
 });
 
 document.getElementById('checkAllBtn').addEventListener('click', ()=>{
+  const total = FACES.reduce((s,f)=>s+counts[f],0);
   let allCorrect = true;
   let anyAnswered = false;
   FACES.forEach(n=>{
-    const input = document.getElementById(`ans-${n}`);
-    if(input.value !== ''){
+    const numEl = document.getElementById(`ans-${n}-num`);
+    const denEl = document.getElementById(`ans-${n}-den`);
+    if(numEl.value !== '' || denEl.value !== ''){
       anyAnswered = true;
       checkAnswer(n);
-      const val = parseInt(input.value,10);
-      if(val !== counts[n]) allCorrect = false;
+      const num = parseFloat(numEl.value), den = parseFloat(denEl.value);
+      if(isNaN(num) || isNaN(den) || den<=0 || total===0 || Math.abs((num/den)-(counts[n]/total)) >= 0.005){
+        allCorrect = false;
+      }
     } else {
       allCorrect = false;
     }
   });
   const msg = document.getElementById('totalCheckMsg');
   if(!anyAnswered){
-    msg.textContent = 'أدخل عددًا لكل حدث أولًا.'; msg.style.color = 'var(--warn)';
+    msg.textContent = 'أدخل كسرًا لكل حدث أولًا.'; msg.style.color = 'var(--warn)';
   } else if(allCorrect){
-    msg.textContent = '🎉 ممتاز! كل الأعداد صحيحة، أنت خبير في قراءة جدول العدّ التكراري!';
+    msg.textContent = '🎉 ممتاز! كل الاحتمالات التجريبية صحيحة!';
     msg.style.color = 'var(--success)';
     confettiBurst();
     sfxCorrect();
@@ -682,14 +619,10 @@ document.getElementById('resetBtn').addEventListener('click', ()=>{
     document.getElementById(`prob-${n}-den`).value = '';
     document.getElementById(`prob-${n}`).className = 'frac-box';
     document.getElementById(`fb-${n}`).textContent = '';
-    document.getElementById(`ans-${n}`).value = '';
-    document.getElementById(`ans-${n}`).className = 'frac-num';
-    document.getElementById(`ansbox-${n}`).className = 'frac-box single';
-    document.getElementById(`real-${n}`).style.visibility = 'hidden';
-    document.getElementById(`exp-${n}-num`).value = '';
-    document.getElementById(`exp-${n}-den`).value = '';
-    document.getElementById(`exp-${n}`).className = 'frac-box';
-    document.getElementById(`expfb-${n}`).textContent = '';
+    document.getElementById(`ans-${n}-num`).value = '';
+    document.getElementById(`ans-${n}-den`).value = '';
+    document.getElementById(`ansbox-${n}`).className = 'frac-box';
+    document.getElementById(`ansfb-${n}`).textContent = '';
   });
   masteryCelebrated = false;
   updateMastery();
