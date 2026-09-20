@@ -158,14 +158,7 @@ table.results td:last-child{border-radius:0 10px 10px 0;border-left:1px solid va
   height:3px;background:var(--danger);transform:translateY(-50%) rotate(-32deg);border-radius:2px}
 .tally-empty{color:#b7c8d6;font-size:12px}
 .count-badge{display:inline-block;min-width:26px;font-weight:800;color:var(--teal)}
-.answer-input{width:66px;text-align:center;border:2px solid var(--border);border-radius:9px;
-              padding:6px 4px;font-family:'Cairo',sans-serif;font-weight:700;font-size:13.5px}
-.answer-input::placeholder{color:#c7d7e2;letter-spacing:2px}
-.answer-input::-webkit-outer-spin-button,.answer-input::-webkit-inner-spin-button{
-  -webkit-appearance:none;margin:0}
-.answer-input{-moz-appearance:textfield;appearance:textfield}
-.answer-input.ok{border-color:var(--success);background:#ecfdf5;color:var(--success)}
-.answer-input.bad{border-color:var(--danger);background:#fef2f2;color:var(--danger)}
+.frac-box.single{padding:6px 14px}
 .mini-check{border:none;border-radius:8px;padding:6px 10px;font-size:11.5px;font-weight:700;
             cursor:pointer;background:var(--info);color:#fff}
 .total-row td{background:#f0d06022;font-weight:800;border-top:2px solid var(--gold)}
@@ -500,7 +493,11 @@ FACES.forEach(n=>{
   tr.innerHTML = `
     <td><span class="face-chip">${n}</span></td>
     <td><div class="tally-cell" id="tally-${n}"><span class="tally-empty">لا نتائج بعد</span></div></td>
-    <td><input type="number" min="0" class="answer-input" id="ans-${n}" placeholder="••"></td>
+    <td>
+      <div class="frac-box single" id="ansbox-${n}">
+        <input type="number" class="frac-num" min="0" id="ans-${n}" placeholder="••" inputmode="numeric">
+      </div>
+    </td>
     <td><button class="mini-check" data-n="${n}">تحقق</button></td>
     <td><span class="count-badge" id="real-${n}" style="visibility:hidden">0</span></td>
   `;
@@ -539,19 +536,20 @@ renderResults();
 
 function checkAnswer(n){
   const input = document.getElementById(`ans-${n}`);
+  const box = document.getElementById(`ansbox-${n}`);
   const realEl = document.getElementById(`real-${n}`);
   sfxClick();
   const val = parseInt(input.value,10);
   if(isNaN(val)){
-    input.classList.add('bad'); input.classList.remove('ok');
+    box.classList.add('bad'); box.classList.remove('ok');
     sfxWrong();
     return;
   }
   if(val === counts[n]){
-    input.classList.add('ok'); input.classList.remove('bad');
+    box.classList.add('ok'); box.classList.remove('bad');
     sfxCorrect();
   } else {
-    input.classList.add('bad'); input.classList.remove('ok');
+    box.classList.add('bad'); box.classList.remove('ok');
     sfxWrong();
   }
   realEl.textContent = counts[n];
@@ -562,7 +560,7 @@ resultsBody.addEventListener('click', e=>{
   if(btn) checkAnswer(btn.dataset.n);
 });
 resultsBody.addEventListener('keydown', e=>{
-  if(e.key==='Enter' && e.target.classList.contains('answer-input')){
+  if(e.key==='Enter' && e.target.classList.contains('frac-num')){
     const n = e.target.id.split('-')[1];
     checkAnswer(n);
   }
@@ -685,7 +683,8 @@ document.getElementById('resetBtn').addEventListener('click', ()=>{
     document.getElementById(`prob-${n}`).className = 'frac-box';
     document.getElementById(`fb-${n}`).textContent = '';
     document.getElementById(`ans-${n}`).value = '';
-    document.getElementById(`ans-${n}`).className = 'answer-input';
+    document.getElementById(`ans-${n}`).className = 'frac-num';
+    document.getElementById(`ansbox-${n}`).className = 'frac-box single';
     document.getElementById(`real-${n}`).style.visibility = 'hidden';
     document.getElementById(`exp-${n}-num`).value = '';
     document.getElementById(`exp-${n}-den`).value = '';
