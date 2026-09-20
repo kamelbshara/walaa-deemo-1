@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>تجربة رمي النرد العشوائية — الاحتمالات</title>
+<title>Dice Roll Experiment — Probability</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 <script>
 window.mathJaxReady = false;
@@ -186,44 +186,44 @@ table.results td:last-child{border-radius:0 10px 10px 0;border-left:1px solid va
   <div class="nav-brand">
     <span class="nav-icon">🎲</span>
     <div>
-      <div class="nav-title">تجربة رمي النرد — الاحتمال النظري والعملي</div>
-      <div class="nav-sub">قسم العلوم · درس تفاعلي في الاحتمالات</div>
+      <div class="nav-title">Dice Roll — Theoretical &amp; Experimental Probability</div>
+      <div class="nav-sub">Science Department · Interactive Probability Lesson</div>
     </div>
   </div>
-  <button class="btn-reset" id="resetBtn">↺ إعادة ضبط التجربة</button>
+  <button class="btn-reset" id="resetBtn">↺ Reset Experiment</button>
 </div>
 
 <div class="wrap">
 
   <div class="intro">
-    <h1>🎯 هدف الدرس</h1>
+    <h1>🎯 Lesson Goal</h1>
     <p>
-      سنتعلّم الفرق بين <b>الاحتمال النظري</b> (ما نتوقعه رياضيًا) و<b>الاحتمال العملي</b> (ما نحصل عليه فعليًا من التجربة).
-      أكمل الخطوات الثلاث بالترتيب: احسب الاحتمال النظري لكل وجه، ثم ارمِ النرد عدة مرات وسجّل النتائج، ثم تحقق من عدّك للنتائج.
+      We'll learn the difference between <b>theoretical probability</b> (what we expect mathematically) and <b>experimental probability</b> (what we actually get from the experiment).
+      Complete the three steps in order: work out the theoretical probability for each face, then roll the die several times and record the results, then check your experimental probability.
     </p>
   </div>
 
   <!-- STEP 1: Theoretical probability -->
   <div class="card">
-    <h2><span class="step-badge">1</span> الاحتمال النظري لكل حدث</h2>
-    <p class="hint">أدخل البسط والمقام لاحتمال ظهور كل رقم (مثال: 1 فوق 6) ثم اضغط «تحقق». حاول مرارًا حتى تتقن الإجابات كلها.</p>
+    <h2><span class="step-badge">1</span> Theoretical Probability of Each Event</h2>
+    <p class="hint">Enter the numerator and denominator for the probability of each number showing up (example: 1 over 6), then click "Check". Try again until you get them all right.</p>
     <table class="prob">
       <thead>
-        <tr><th>الحدث (الوجه)</th><th>الاحتمال النظري (كسر)</th><th></th><th>الملاحظة</th></tr>
+        <tr><th>Event (Face)</th><th>Theoretical Probability (fraction)</th><th></th><th>Feedback</th></tr>
       </thead>
       <tbody id="probBody"></tbody>
     </table>
     <div class="mastery-bar">
       <div class="mastery-track"><div class="mastery-fill" id="masteryFill"></div></div>
-      <div class="mastery-label" id="masteryLabel">0 / 6 صحيحة</div>
+      <div class="mastery-label" id="masteryLabel">0 / 6 correct</div>
     </div>
-    <div class="mastery-msg" id="masteryMsg">🏆 أحسنت! لقد أتقنت الاحتمال النظري لكل وجوه النرد (1/6 لكل حدث).</div>
+    <div class="mastery-msg" id="masteryMsg">🏆 Well done! You've mastered the theoretical probability for every face of the die (1/6 for each event).</div>
   </div>
 
   <!-- STEP 2: Rolling -->
   <div class="card">
-    <h2><span class="step-badge">2</span> نفّذ التجربة: ارمِ النرد</h2>
-    <p class="hint">اضغط «ارمِ النرد» لرمي النرد مرة واحدة في كل ضغطة. ستُسجَّل كل نتيجة تلقائيًا في جدول العدّ التكراري أدناه.</p>
+    <h2><span class="step-badge">2</span> Run the Experiment: Roll the Die</h2>
+    <p class="hint">Click "Roll the Die" to roll once per click. Each result is automatically recorded in the tally table below.</p>
     <div class="dice-zone">
       <div class="stage"><div class="cube" id="cube">
         <div class="face f-front" data-face="1"></div>
@@ -234,32 +234,32 @@ table.results td:last-child{border-radius:0 10px 10px 0;border-left:1px solid va
         <div class="face f-bottom" data-face="4"></div>
       </div></div>
       <div class="dice-controls">
-        <button class="roll-btn" id="rollBtn">🎲 ارمِ النرد</button>
-        <div class="result-readout">آخر نتيجة: <b id="lastResult">—</b></div>
+        <button class="roll-btn" id="rollBtn">🎲 Roll the Die</button>
+        <div class="result-readout">Last result: <b id="lastResult">—</b></div>
       </div>
-      <div class="exp-count">عدد التجارب الكلي<b id="totalRolls">0</b></div>
+      <div class="exp-count">Total number of trials<b id="totalRolls">0</b></div>
     </div>
   </div>
 
   <!-- STEP 3: Results table + experimental probability -->
   <div class="card">
-    <h2><span class="step-badge">3</span> جدول العدّ التكراري (Tally) واحسب الاحتمال التجريبي</h2>
-    <p class="hint">لاحظ كيف تُرسم الشرطات: أربع شرطات رأسية ثم شرطة مائلة تقطعها لتمثّل المجموعة الخامسة (////). اقرأ كل صف ثم اكتب الاحتمال التجريبي لكل حدث على صورة كسر (التكرار ÷ عدد التجارب الكلي) واضغط «تحقق».</p>
+    <h2><span class="step-badge">3</span> Tally Table &amp; Experimental Probability</h2>
+    <p class="hint">Notice how the tally marks are drawn: four vertical strokes, then a diagonal stroke crossing them for the fifth in the group (////). Read each row, then write the experimental probability of each event as a fraction (frequency ÷ total trials) and click "Check".</p>
     <table class="results">
       <thead>
-        <tr><th>الحدث</th><th>العدّ التكراري (Tally)</th><th>الاحتمال التجريبي (كسر)</th><th></th><th>الملاحظة</th></tr>
+        <tr><th>Event</th><th>Tally</th><th>Experimental Probability (fraction)</th><th></th><th>Feedback</th></tr>
       </thead>
       <tbody id="resultsBody"></tbody>
       <tfoot>
         <tr class="total-row">
-          <td>الإجمالي</td>
+          <td>Total</td>
           <td id="totalTally">—</td>
-          <td colspan="3">مجموع عدد التجارب: <span class="count-badge" id="footTotal">0</span></td>
+          <td colspan="3">Total number of trials: <span class="count-badge" id="footTotal">0</span></td>
         </tr>
       </tfoot>
     </table>
     <div class="check-all-row">
-      <button class="big-btn" id="checkAllBtn">✅ تحقق من كل الإجابات دفعة واحدة</button>
+      <button class="big-btn" id="checkAllBtn">✅ Check All Answers at Once</button>
       <span class="total-check-msg" id="totalCheckMsg"></span>
     </div>
   </div>
@@ -345,7 +345,7 @@ FACES.forEach(n=>{
         <input type="number" class="frac-den" id="prob-${n}-den" min="1" placeholder="••" inputmode="numeric">
       </div>
     </td>
-    <td><button class="check-btn" data-n="${n}">تحقق</button></td>
+    <td><button class="check-btn" data-n="${n}">Check</button></td>
     <td class="fb-cell" id="fb-${n}"></td>
   `;
   probBody.appendChild(tr);
@@ -361,7 +361,7 @@ function checkProb(n){
   const den = parseFloat(denEl.value);
   if(isNaN(num) || isNaN(den) || den <= 0){
     box.classList.remove('ok'); box.classList.add('bad');
-    fb.textContent = '⚠️ اكتب البسط والمقام كعددين، مثل 1 فوق 6'; fb.className='fb-cell fb-bad';
+    fb.textContent = '⚠️ Write the numerator and denominator as two numbers, like 1 over 6'; fb.className='fb-cell fb-bad';
     sfxWrong();
     return;
   }
@@ -369,12 +369,12 @@ function checkProb(n){
   const correct = Math.abs(val - (1/6)) < 0.003;
   if(correct){
     box.classList.remove('bad'); box.classList.add('ok');
-    fb.innerHTML = `✔ صحيح! الاحتمال = ${fracHTML(1,6)}`; fb.className='fb-cell fb-ok';
+    fb.innerHTML = `✔ Correct! Probability = ${fracHTML(1,6)}`; fb.className='fb-cell fb-ok';
     if(!mastered[n]) sfxCorrect();
     mastered[n] = true;
   } else {
     box.classList.remove('ok'); box.classList.add('bad');
-    fb.innerHTML = '✘ غير صحيح، حاول مجددًا (تلميح: عدد الأوجه المرغوبة ÷ عدد الأوجه الكلي)'; fb.className='fb-cell fb-bad';
+    fb.innerHTML = '✘ Not correct, try again (hint: number of desired outcomes ÷ total number of outcomes)'; fb.className='fb-cell fb-bad';
     mastered[n] = false;
     sfxWrong();
   }
@@ -396,7 +396,7 @@ let masteryCelebrated = false;
 function updateMastery(){
   const count = FACES.filter(n=>mastered[n]).length;
   document.getElementById('masteryFill').style.width = (count/6*100)+'%';
-  document.getElementById('masteryLabel').textContent = `${count} / 6 صحيحة`;
+  document.getElementById('masteryLabel').textContent = `${count} / 6 correct`;
   const msg = document.getElementById('masteryMsg');
   if(count===6){
     msg.style.display='block';
@@ -479,7 +479,7 @@ FACES.forEach(n=>{
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td><span class="face-chip">${n}</span></td>
-    <td><div class="tally-cell" id="tally-${n}"><span class="tally-empty">لا نتائج بعد</span></div></td>
+    <td><div class="tally-cell" id="tally-${n}"><span class="tally-empty">No results yet</span></div></td>
     <td>
       <div class="frac-box" id="ansbox-${n}">
         <input type="number" class="frac-num" id="ans-${n}-num" min="0" placeholder="••" inputmode="numeric">
@@ -487,14 +487,14 @@ FACES.forEach(n=>{
         <input type="number" class="frac-den" id="ans-${n}-den" min="1" placeholder="••" inputmode="numeric">
       </div>
     </td>
-    <td><button class="mini-check" data-n="${n}">تحقق</button></td>
+    <td><button class="mini-check" data-n="${n}">Check</button></td>
     <td class="fb-cell" id="ansfb-${n}"></td>
   `;
   resultsBody.appendChild(tr);
 });
 
 function buildTallyMarkup(n){
-  if(n===0) return '<span class="tally-empty">لا نتائج بعد</span>';
+  if(n===0) return '<span class="tally-empty">No results yet</span>';
   let html = '';
   const fullGroups = Math.floor(n/5);
   const remainder = n%5;
@@ -515,7 +515,7 @@ function renderResults(){
   });
   totalRollsEl.textContent = total;
   document.getElementById('footTotal').textContent = total;
-  document.getElementById('totalTally').innerHTML = `<span class="count-badge">${total}</span> رمية`;
+  document.getElementById('totalTally').innerHTML = `<span class="count-badge">${total}</span> rolls`;
 }
 renderResults();
 
@@ -529,7 +529,7 @@ function checkAnswer(n){
 
   if(total === 0){
     box.classList.remove('ok'); box.classList.add('bad');
-    fb.innerHTML = '⚠️ ارمِ النرد عدة مرات أولًا (الخطوة 2).';
+    fb.innerHTML = '⚠️ Roll the die a few times first (step 2).';
     fb.className = 'fb-cell fb-bad';
     typesetEl(fb); sfxWrong();
     return;
@@ -543,7 +543,7 @@ function checkAnswer(n){
 
   if(isNaN(num) || isNaN(den) || den <= 0){
     box.classList.remove('ok'); box.classList.add('bad');
-    fb.innerHTML = '⚠️ اكتب البسط والمقام كعددين، مثل التكرار فوق عدد التجارب';
+    fb.innerHTML = '⚠️ Write the numerator and denominator as two numbers, like frequency over total trials';
     fb.className = 'fb-cell fb-bad';
     typesetEl(fb); sfxWrong();
     return;
@@ -553,13 +553,13 @@ function checkAnswer(n){
   if(correct){
     box.classList.remove('bad'); box.classList.add('ok');
     fb.innerHTML = (rn===freq && rd===total)
-      ? `✔ صحيح! الاحتمال التجريبي = ${fracHTML(freq,total)}`
-      : `✔ صحيح! الاحتمال التجريبي = ${fracHTML(freq,total)} = ${fracHTML(rn,rd)}`;
+      ? `✔ Correct! Experimental probability = ${fracHTML(freq,total)}`
+      : `✔ Correct! Experimental probability = ${fracHTML(freq,total)} = ${fracHTML(rn,rd)}`;
     fb.className = 'fb-cell fb-ok';
     sfxCorrect();
   } else {
     box.classList.remove('ok'); box.classList.add('bad');
-    fb.innerHTML = `✘ غير صحيح. الاحتمال التجريبي = ${fracHTML(freq,total)} (التكرار ÷ عدد التجارب الكلي)`;
+    fb.innerHTML = `✘ Not correct. Experimental probability = ${fracHTML(freq,total)} (frequency ÷ total number of trials)`;
     fb.className = 'fb-cell fb-bad';
     sfxWrong();
   }
@@ -596,14 +596,14 @@ document.getElementById('checkAllBtn').addEventListener('click', ()=>{
   });
   const msg = document.getElementById('totalCheckMsg');
   if(!anyAnswered){
-    msg.textContent = 'أدخل كسرًا لكل حدث أولًا.'; msg.style.color = 'var(--warn)';
+    msg.textContent = 'Enter a fraction for each event first.'; msg.style.color = 'var(--warn)';
   } else if(allCorrect){
-    msg.textContent = '🎉 ممتاز! كل الاحتمالات التجريبية صحيحة!';
+    msg.textContent = '🎉 Excellent! All the experimental probabilities are correct!';
     msg.style.color = 'var(--success)';
     confettiBurst();
     sfxCorrect();
   } else {
-    msg.textContent = 'بعض الإجابات غير صحيحة، راجع الجدول مرة أخرى وحاول من جديد.';
+    msg.textContent = 'Some answers are incorrect — check the table again and try again.';
     msg.style.color = 'var(--danger)';
     sfxWrong();
   }
@@ -611,7 +611,7 @@ document.getElementById('checkAllBtn').addEventListener('click', ()=>{
 
 /* ───────────────────────── reset ───────────────────────── */
 document.getElementById('resetBtn').addEventListener('click', ()=>{
-  if(!confirm('هل تريد إعادة ضبط التجربة بالكامل؟ سيتم مسح كل النتائج والإجابات.')) return;
+  if(!confirm('Reset the whole experiment? All results and answers will be cleared.')) return;
   FACES.forEach(n=>{
     counts[n] = 0;
     mastered[n] = false;
