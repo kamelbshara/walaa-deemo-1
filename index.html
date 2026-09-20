@@ -73,6 +73,11 @@ table.prob td{text-align:center;padding:6px 8px}
 .frac-num,.frac-den{width:46px;text-align:center;border:none;background:transparent;
             font-family:'Cairo',sans-serif;font-size:15px;font-weight:800;color:var(--text)}
 .frac-num:focus,.frac-den:focus{outline:none}
+.frac-num::placeholder,.frac-den::placeholder{color:#c7d7e2;letter-spacing:2px}
+.frac-num::-webkit-outer-spin-button,.frac-num::-webkit-inner-spin-button,
+.frac-den::-webkit-outer-spin-button,.frac-den::-webkit-inner-spin-button{
+  -webkit-appearance:none;margin:0}
+.frac-num,.frac-den{-moz-appearance:textfield;appearance:textfield}
 .frac-box.ok .frac-num,.frac-box.ok .frac-den{color:var(--success)}
 .frac-box.bad .frac-num,.frac-box.bad .frac-den{color:var(--danger)}
 .frac-bar{width:52px;height:2px;background:var(--text);border-radius:2px}
@@ -155,6 +160,10 @@ table.results td:last-child{border-radius:0 10px 10px 0;border-left:1px solid va
 .count-badge{display:inline-block;min-width:26px;font-weight:800;color:var(--teal)}
 .answer-input{width:66px;text-align:center;border:2px solid var(--border);border-radius:9px;
               padding:6px 4px;font-family:'Cairo',sans-serif;font-weight:700;font-size:13.5px}
+.answer-input::placeholder{color:#c7d7e2;letter-spacing:2px}
+.answer-input::-webkit-outer-spin-button,.answer-input::-webkit-inner-spin-button{
+  -webkit-appearance:none;margin:0}
+.answer-input{-moz-appearance:textfield;appearance:textfield}
 .answer-input.ok{border-color:var(--success);background:#ecfdf5;color:var(--success)}
 .answer-input.bad{border-color:var(--danger);background:#fef2f2;color:var(--danger)}
 .mini-check{border:none;border-radius:8px;padding:6px 10px;font-size:11.5px;font-weight:700;
@@ -351,9 +360,9 @@ FACES.forEach(n=>{
     <td><span class="face-chip">${n}</span></td>
     <td>
       <div class="frac-box" id="prob-${n}">
-        <input type="number" class="frac-num" id="prob-${n}-num" min="0" placeholder="1" inputmode="numeric">
+        <input type="number" class="frac-num" id="prob-${n}-num" min="0" placeholder="••" inputmode="numeric">
         <div class="frac-bar"></div>
-        <input type="number" class="frac-den" id="prob-${n}-den" min="1" placeholder="6" inputmode="numeric">
+        <input type="number" class="frac-den" id="prob-${n}-den" min="1" placeholder="••" inputmode="numeric">
       </div>
     </td>
     <td><button class="check-btn" data-n="${n}">تحقق</button></td>
@@ -491,7 +500,7 @@ FACES.forEach(n=>{
   tr.innerHTML = `
     <td><span class="face-chip">${n}</span></td>
     <td><div class="tally-cell" id="tally-${n}"><span class="tally-empty">لا نتائج بعد</span></div></td>
-    <td><input type="number" min="0" class="answer-input" id="ans-${n}" placeholder="؟"></td>
+    <td><input type="number" min="0" class="answer-input" id="ans-${n}" placeholder="••"></td>
     <td><button class="mini-check" data-n="${n}">تحقق</button></td>
     <td><span class="count-badge" id="real-${n}" style="visibility:hidden">0</span></td>
   `;
@@ -568,9 +577,9 @@ FACES.forEach(n=>{
     <td><span class="count-badge" id="expfreq-${n}">0</span></td>
     <td>
       <div class="frac-box" id="exp-${n}">
-        <input type="number" class="frac-num" id="exp-${n}-num" min="0" placeholder="؟" inputmode="numeric">
+        <input type="number" class="frac-num" id="exp-${n}-num" min="0" placeholder="••" inputmode="numeric">
         <div class="frac-bar"></div>
-        <input type="number" class="frac-den" id="exp-${n}-den" min="1" placeholder="؟" inputmode="numeric">
+        <input type="number" class="frac-den" id="exp-${n}-den" min="1" placeholder="••" inputmode="numeric">
       </div>
     </td>
     <td><button class="check-btn" data-n="${n}">تحقق</button></td>
