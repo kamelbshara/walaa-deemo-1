@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تجربة رمي النرد العشوائية — الاحتمالات</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<script>
+window.mathJaxReady = false;
+window.MathJax = {
+  tex: { inlineMath: [['\\(', '\\)']] },
+  chtml: { scale: 1.05 },
+  startup: {
+    typeset: false,
+    ready(){ MathJax.startup.defaultReady(); window.mathJaxReady = true; }
+  }
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"
+        onerror="window.mathJaxReady=false"></script>
+<style>
+:root{
+  --teal:#0e7490; --teal-l:#0891b2; --teal-ll:#22d3ee;
+  --purple:#1a0a3c; --purple-m:#3b1f8c;
+  --gold:#c9a227; --gold-l:#f0d060;
+  --bg:#f0f9ff; --card:#fff; --border:#bae6fd; --text:#0c2340;
+  --danger:#E11D48; --warn:#D97706; --success:#059669; --info:#4338CA;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Cairo',sans-serif;background:
+  radial-gradient(circle at 15% 10%,#0e4d6e22,transparent 40%),
+  radial-gradient(circle at 90% 90%,#c9a22722,transparent 40%),
+  var(--bg);color:var(--text);min-height:100vh;padding-bottom:60px}
+
+.nav{background:linear-gradient(135deg,#0c2340,#0e4d6e,#0891b2);color:#fff;
+     padding:14px 20px;display:flex;align-items:center;justify-content:space-between;
+     position:sticky;top:0;z-index:50;box-shadow:0 2px 16px rgba(8,145,178,.35)}
+.nav-brand{display:flex;align-items:center;gap:10px}
+.nav-icon{font-size:28px}
+.nav-title{font-size:16px;font-weight:900;line-height:1.2}
+.nav-sub{font-size:11px;opacity:.8}
+.btn-reset{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;
+           border-radius:10px;padding:8px 16px;font-family:'Cairo',sans-serif;font-size:13px;
+           font-weight:700;cursor:pointer;transition:.15s}
+.btn-reset:hover{background:rgba(255,255,255,.28)}
+
+.wrap{max-width:1100px;margin:0 auto;padding:22px 16px}
+.intro{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px 22px;
+       margin-bottom:22px;box-shadow:0 4px 18px rgba(14,116,144,.08)}
+.intro h1{font-size:19px;color:var(--purple);margin-bottom:6px}
+.intro p{font-size:13.5px;color:#44607a;line-height:1.9}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 22px;
+      margin-bottom:22px;box-shadow:0 4px 18px rgba(14,116,144,.08);position:relative;overflow:hidden}
+.card h2{font-size:16px;color:var(--purple);display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.step-badge{background:var(--teal);color:#fff;border-radius:50%;width:26px;height:26px;
+            display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:900}
+.card .hint{font-size:12.5px;color:#5b7a94;margin-bottom:16px}
+
+/* ── Probability table ── */
+table.prob{width:100%;border-collapse:separate;border-spacing:0 8px}
+table.prob th{font-size:12px;color:#5b7a94;font-weight:700;padding:4px 8px;text-align:center}
+table.prob td{text-align:center;padding:6px 8px}
+.face-chip{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;
+           border-radius:10px;background:linear-gradient(135deg,var(--purple),var(--purple-m));
+           color:#fff;font-weight:900;font-size:15px;box-shadow:0 2px 8px rgba(26,10,60,.25)}
+.frac-box{display:inline-flex;flex-direction:column;align-items:center;gap:2px;
+          border:2px solid var(--border);border-radius:10px;padding:6px 10px;
+          background:#fbfeff;transition:.15s}
+.frac-box:focus-within{border-color:var(--teal-l);box-shadow:0 0 0 3px rgba(8,145,178,.15)}
+.frac-box.ok{border-color:var(--success);background:#ecfdf5}
+.frac-box.bad{border-color:var(--danger);background:#fef2f2}
+.frac-num,.frac-den{width:46px;text-align:center;border:none;background:transparent;
+            font-family:'Cairo',sans-serif;font-size:15px;font-weight:800;color:var(--text)}
+.frac-num:focus,.frac-den:focus{outline:none}
+.frac-box.ok .frac-num,.frac-box.ok .frac-den{color:var(--success)}
+.frac-box.bad .frac-num,.frac-box.bad .frac-den{color:var(--danger)}
+.frac-bar{width:52px;height:2px;background:var(--text);border-radius:2px}
+.frac-box.ok .frac-bar{background:var(--success)}
+.frac-box.bad .frac-bar{background:var(--danger)}
+.check-btn{border:none;border-radius:9px;padding:7px 14px;font-family:'Cairo',sans-serif;
+           font-size:12.5px;font-weight:700;cursor:pointer;background:var(--teal);color:#fff;transition:.15s}
+.check-btn:hover{background:var(--teal-l)}
+.fb-cell{font-size:12px;font-weight:700;min-width:110px}
+.fb-ok{color:var(--success)}
+.fb-bad{color:var(--danger)}
+.fb-cell mjx-container{font-size:104% !important}
+.inline-frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;
+             margin:0 3px;font-weight:800}
+.inline-frac .num,.inline-frac .den{line-height:1.15;padding:0 2px}
+.inline-frac .bar{width:100%;height:2px;background:currentColor;border-radius:2px;margin:1px 0}
+
+.mastery-bar{margin-top:14px;display:flex;align-items:center;gap:12px}
+.mastery-track{flex:1;height:12px;border-radius:8px;background:#e6f4f9;overflow:hidden}
+.mastery-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--teal),var(--teal-ll));
+              transition:width .4s ease}
+.mastery-label{font-size:12.5px;font-weight:700;color:var(--teal);white-space:nowrap}
+.mastery-msg{margin-top:10px;font-size:13.5px;font-weight:800;color:var(--success);display:none}
+
+/* ── Dice area ── */
+.dice-zone{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:36px;padding:18px 0}
+.stage{perspective:900px;width:130px;height:130px}
+.cube{width:100%;height:100%;position:relative;transform-style:preserve-3d;
+      transform:rotateX(-25deg) rotateY(35deg);
+      transition:transform 1.1s cubic-bezier(.2,.9,.3,1.1);}
+.cube.rolling{animation:shake .12s linear infinite}
+@keyframes shake{
+  0%{ transform: rotateX(-25deg) rotateY(35deg) translate(0,0) rotate(0deg);}
+  25%{ transform: rotateX(15deg) rotateY(120deg) translate(4px,-3px) rotate(3deg);}
+  50%{ transform: rotateX(-40deg) rotateY(220deg) translate(-4px,3px) rotate(-4deg);}
+  75%{ transform: rotateX(30deg) rotateY(310deg) translate(3px,4px) rotate(2deg);}
+  100%{ transform: rotateX(-25deg) rotateY(35deg) translate(0,0) rotate(0deg);}
+}
+.face{position:absolute;width:130px;height:130px;background:linear-gradient(155deg,#ffffff,#eef6fb);
+      border:2px solid #d7ecf5;border-radius:18px;box-shadow:inset 0 0 12px rgba(8,145,178,.12);
+      display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+      padding:16px}
+.pip{width:20px;height:20px;border-radius:50%;
+     background:radial-gradient(circle at 32% 32%,#1a3a55,#0c2340);
+     box-shadow:0 1px 3px rgba(0,0,0,.3);align-self:center;justify-self:center;opacity:0}
+.f-front{transform:translateZ(65px)}
+.f-back{transform:rotateY(180deg) translateZ(65px)}
+.f-right{transform:rotateY(90deg) translateZ(65px)}
+.f-left{transform:rotateY(-90deg) translateZ(65px)}
+.f-top{transform:rotateX(90deg) translateZ(65px)}
+.f-bottom{transform:rotateX(-90deg) translateZ(65px)}
+
+.dice-controls{display:flex;flex-direction:column;align-items:center;gap:14px}
+.roll-btn{border:none;border-radius:14px;padding:14px 30px;font-family:'Cairo',sans-serif;
+          font-size:16px;font-weight:900;cursor:pointer;color:#fff;
+          background:linear-gradient(135deg,var(--gold),#e0b53a);
+          box-shadow:0 6px 16px rgba(201,162,39,.4);transition:.15s}
+.roll-btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(201,162,39,.5)}
+.roll-btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.result-readout{font-size:13px;color:#44607a}
+.result-readout b{color:var(--purple);font-size:18px}
+.exp-count{background:var(--purple);color:#fff;border-radius:12px;padding:10px 20px;
+           font-size:13px;text-align:center;min-width:150px}
+.exp-count b{display:block;font-size:26px;color:var(--gold-l)}
+
+/* ── Results / tally table ── */
+table.results{width:100%;border-collapse:separate;border-spacing:0 6px}
+table.results th{font-size:12px;color:#5b7a94;font-weight:700;padding:6px 8px;text-align:center}
+table.results td{text-align:center;padding:6px 8px;background:#fbfeff;border-top:1px solid var(--border);
+                  border-bottom:1px solid var(--border)}
+table.results td:first-child{border-radius:10px 0 0 10px;border-right:1px solid var(--border)}
+table.results td:last-child{border-radius:0 10px 10px 0;border-left:1px solid var(--border)}
+.tally-cell{min-height:34px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
+            gap:8px;min-width:180px}
+.tally-group{position:relative;display:flex;gap:3px;padding:2px 3px}
+.tally-stroke{width:3px;height:20px;background:var(--purple);border-radius:2px}
+.tally-group.has5::after{content:'';position:absolute;left:-1px;top:50%;width:calc(100% + 2px);
+  height:3px;background:var(--danger);transform:translateY(-50%) rotate(-32deg);border-radius:2px}
+.tally-empty{color:#b7c8d6;font-size:12px}
+.count-badge{display:inline-block;min-width:26px;font-weight:800;color:var(--teal)}
+.answer-input{width:66px;text-align:center;border:2px solid var(--border);border-radius:9px;
+              padding:6px 4px;font-family:'Cairo',sans-serif;font-weight:700;font-size:13.5px}
+.answer-input.ok{border-color:var(--success);background:#ecfdf5;color:var(--success)}
+.answer-input.bad{border-color:var(--danger);background:#fef2f2;color:var(--danger)}
+.mini-check{border:none;border-radius:8px;padding:6px 10px;font-size:11.5px;font-weight:700;
+            cursor:pointer;background:var(--info);color:#fff}
+.total-row td{background:#f0d06022;font-weight:800;border-top:2px solid var(--gold)}
+
+.check-all-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;align-items:center}
+.big-btn{border:none;border-radius:12px;padding:11px 22px;font-family:'Cairo',sans-serif;
+         font-size:13.5px;font-weight:800;cursor:pointer;color:#fff;background:var(--success);
+         box-shadow:0 4px 12px rgba(5,150,105,.3);transition:.15s}
+.big-btn:hover{transform:translateY(-1px)}
+.total-check-msg{font-size:13px;font-weight:700}
+
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:999}
+.confetti span{position:absolute;top:-20px;width:9px;height:14px;opacity:.9;border-radius:2px;
+               animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(540deg);opacity:0}}
+
+@media(max-width:640px){
+  .dice-zone{gap:18px}
+  table.results{font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-brand">
+    <span class="nav-icon">🎲</span>
+    <div>
+      <div class="nav-title">تجربة رمي النرد — الاحتمال النظري والعملي</div>
+      <div class="nav-sub">قسم العلوم · درس تفاعلي في الاحتمالات</div>
+    </div>
+  </div>
+  <button class="btn-reset" id="resetBtn">↺ إعادة ضبط التجربة</button>
+</div>
+
+<div class="wrap">
+
+  <div class="intro">
+    <h1>🎯 هدف الدرس</h1>
+    <p>
+      سنتعلّم الفرق بين <b>الاحتمال النظري</b> (ما نتوقعه رياضيًا) و<b>الاحتمال العملي</b> (ما نحصل عليه فعليًا من التجربة).
+      أكمل الخطوات الثلاث بالترتيب: احسب الاحتمال النظري لكل وجه، ثم ارمِ النرد عدة مرات وسجّل النتائج، ثم تحقق من عدّك للنتائج.
+    </p>
+  </div>
+
+  <!-- STEP 1: Theoretical probability -->
+  <div class="card">
+    <h2><span class="step-badge">1</span> الاحتمال النظري لكل حدث</h2>
+    <p class="hint">أدخل البسط والمقام لاحتمال ظهور كل رقم (مثال: 1 فوق 6) ثم اضغط «تحقق». حاول مرارًا حتى تتقن الإجابات كلها.</p>
+    <table class="prob">
+      <thead>
+        <tr><th>الحدث (الوجه)</th><th>الاحتمال النظري (كسر)</th><th></th><th>الملاحظة</th></tr>
+      </thead>
+      <tbody id="probBody"></tbody>
+    </table>
+    <div class="mastery-bar">
+      <div class="mastery-track"><div class="mastery-fill" id="masteryFill"></div></div>
+      <div class="mastery-label" id="masteryLabel">0 / 6 صحيحة</div>
+    </div>
+    <div class="mastery-msg" id="masteryMsg">🏆 أحسنت! لقد أتقنت الاحتمال النظري لكل وجوه النرد (1/6 لكل حدث).</div>
+  </div>
+
+  <!-- STEP 2: Rolling -->
+  <div class="card">
+    <h2><span class="step-badge">2</span> نفّذ التجربة: ارمِ النرد</h2>
+    <p class="hint">اضغط «ارمِ النرد» لرمي النرد مرة واحدة في كل ضغطة. ستُسجَّل كل نتيجة تلقائيًا في جدول العدّ التكراري أدناه.</p>
+    <div class="dice-zone">
+      <div class="stage"><div class="cube" id="cube">
+        <div class="face f-front" data-face="1"></div>
+        <div class="face f-back" data-face="6"></div>
+        <div class="face f-right" data-face="2"></div>
+        <div class="face f-left" data-face="5"></div>
+        <div class="face f-top" data-face="3"></div>
+        <div class="face f-bottom" data-face="4"></div>
+      </div></div>
+      <div class="dice-controls">
+        <button class="roll-btn" id="rollBtn">🎲 ارمِ النرد</button>
+        <div class="result-readout">آخر نتيجة: <b id="lastResult">—</b></div>
+      </div>
+      <div class="exp-count">عدد التجارب الكلي<b id="totalRolls">0</b></div>
+    </div>
+  </div>
+
+  <!-- STEP 3: Results table -->
+  <div class="card">
+    <h2><span class="step-badge">3</span> جدول العدّ التكراري (Tally) وتحقّق من عدّك</h2>
+    <p class="hint">لاحظ كيف تُرسم الشرطات: أربع شرطات رأسية ثم شرطة مائلة تقطعها لتمثّل المجموعة الخامسة (////). اقرأ كل صف واكتب العدد الذي تراه ثم اضغط «تحقق».</p>
+    <table class="results">
+      <thead>
+        <tr><th>الحدث</th><th>العدّ التكراري (Tally)</th><th>عدّك للنتيجة</th><th></th><th>التكرار الفعلي</th></tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+      <tfoot>
+        <tr class="total-row">
+          <td>الإجمالي</td>
+          <td id="totalTally">—</td>
+          <td colspan="3">مجموع عدد التجارب: <span class="count-badge" id="footTotal">0</span></td>
+        </tr>
+      </tfoot>
+    </table>
+    <div class="check-all-row">
+      <button class="big-btn" id="checkAllBtn">✅ تحقق من كل الإجابات دفعة واحدة</button>
+      <span class="total-check-msg" id="totalCheckMsg"></span>
+    </div>
+  </div>
+
+  <!-- STEP 4: Experimental probability -->
+  <div class="card">
+    <h2><span class="step-badge">4</span> احسب الاحتمال التجريبي لكل حدث</h2>
+    <p class="hint">الاحتمال التجريبي = التكرار الفعلي ÷ عدد التجارب الكلي. أدخله على صورة كسر رياضي (بسط/مقام) ثم اضغط «تحقق» لمقارنته بالاحتمال النظري (1/6).</p>
+    <table class="prob">
+      <thead>
+        <tr><th>الحدث</th><th>التكرار الفعلي</th><th>الاحتمال التجريبي (كسر)</th><th></th><th>الملاحظة</th></tr>
+      </thead>
+      <tbody id="expBody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+/* ───────────────────────── sound effects (Web Audio, no files needed) ───────────────────────── */
+let actx;
+function ctx(){ if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); return actx; }
+function beep(freq, dur, type, gainPeak, delay){
+  const c = ctx(); const t0 = c.currentTime + (delay||0);
+  const osc = c.createOscillator(); const gain = c.createGain();
+  osc.type = type||'sine'; osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(gainPeak||0.2, t0+0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  osc.connect(gain); gain.connect(c.destination);
+  osc.start(t0); osc.stop(t0+dur+0.05);
+}
+function sfxCorrect(){ beep(660,.12,'triangle',.22,0); beep(880,.16,'triangle',.22,.1); beep(1180,.22,'triangle',.25,.2); }
+function sfxWrong(){ beep(220,.18,'sawtooth',.18,0); beep(150,.22,'sawtooth',.18,.09); }
+function sfxClick(){ beep(500,.05,'square',.06,0); }
+function sfxRattle(){
+  const c = ctx();
+  for(let i=0;i<10;i++){
+    const t = i*0.08;
+    const bufSize = c.sampleRate*0.03;
+    const buf = c.createBuffer(1,bufSize,c.sampleRate);
+    const data = buf.getChannelData(0);
+    for(let j=0;j<bufSize;j++) data[j] = (Math.random()*2-1)*(1-j/bufSize);
+    const src = c.createBufferSource(); src.buffer = buf;
+    const g = c.createGain(); g.gain.setValueAtTime(0.15, c.currentTime+t);
+    src.connect(g); g.connect(c.destination);
+    src.start(c.currentTime+t);
+  }
+}
+function sfxThud(){ beep(120,.15,'sine',.3,0); }
+
+function confettiBurst(){
+  const box = document.createElement('div'); box.className='confetti';
+  const colors = ['#0e7490','#c9a227','#1a0a3c','#22d3ee','#f0d060','#E11D48'];
+  for(let i=0;i<60;i++){
+    const s = document.createElement('span');
+    s.style.left = Math.random()*100+'vw';
+    s.style.background = colors[i%colors.length];
+    s.style.animationDuration = (2+Math.random()*1.8)+'s';
+    s.style.animationDelay = (Math.random()*0.4)+'s';
+    box.appendChild(s);
+  }
+  document.body.appendChild(box);
+  setTimeout(()=>box.remove(), 4200);
+}
+
+/* ───────────────────────── MathJax helpers (with CSS fallback) ───────────────────────── */
+function typesetEl(el){
+  if(window.mathJaxReady && window.MathJax && MathJax.typesetPromise){
+    MathJax.typesetPromise([el]).catch(()=>{});
+  }
+}
+/* Returns a math fraction: LaTeX for MathJax to typeset, or a styled inline
+   fraction as a graceful fallback when MathJax couldn't be loaded (e.g. a
+   school network blocking the CDN). */
+function fracHTML(n, d){
+  if(window.mathJaxReady) return `\\(\\dfrac{${n}}{${d}}\\)`;
+  return `<span class="inline-frac"><span class="num">${n}</span><span class="bar"></span><span class="den">${d}</span></span>`;
+}
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a||1; }
+
+/* ───────────────────────── STEP 1: theoretical probability ───────────────────────── */
+const FACES = [1,2,3,4,5,6];
+const probBody = document.getElementById('probBody');
+const mastered = {};
+FACES.forEach(n=>{
+  mastered[n] = false;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><span class="face-chip">${n}</span></td>
+    <td>
+      <div class="frac-box" id="prob-${n}">
+        <input type="number" class="frac-num" id="prob-${n}-num" min="0" placeholder="1" inputmode="numeric">
+        <div class="frac-bar"></div>
+        <input type="number" class="frac-den" id="prob-${n}-den" min="1" placeholder="6" inputmode="numeric">
+      </div>
+    </td>
+    <td><button class="check-btn" data-n="${n}">تحقق</button></td>
+    <td class="fb-cell" id="fb-${n}"></td>
+  `;
+  probBody.appendChild(tr);
+});
+
+function checkProb(n){
+  const box = document.getElementById(`prob-${n}`);
+  const numEl = document.getElementById(`prob-${n}-num`);
+  const denEl = document.getElementById(`prob-${n}-den`);
+  const fb = document.getElementById(`fb-${n}`);
+  sfxClick();
+  const num = parseFloat(numEl.value);
+  const den = parseFloat(denEl.value);
+  if(isNaN(num) || isNaN(den) || den <= 0){
+    box.classList.remove('ok'); box.classList.add('bad');
+    fb.textContent = '⚠️ اكتب البسط والمقام كعددين، مثل 1 فوق 6'; fb.className='fb-cell fb-bad';
+    sfxWrong();
+    return;
+  }
+  const val = num/den;
+  const correct = Math.abs(val - (1/6)) < 0.003;
+  if(correct){
+    box.classList.remove('bad'); box.classList.add('ok');
+    fb.innerHTML = `✔ صحيح! الاحتمال = ${fracHTML(1,6)}`; fb.className='fb-cell fb-ok';
+    if(!mastered[n]) sfxCorrect();
+    mastered[n] = true;
+  } else {
+    box.classList.remove('ok'); box.classList.add('bad');
+    fb.innerHTML = '✘ غير صحيح، حاول مجددًا (تلميح: عدد الأوجه المرغوبة ÷ عدد الأوجه الكلي)'; fb.className='fb-cell fb-bad';
+    mastered[n] = false;
+    sfxWrong();
+  }
+  typesetEl(fb);
+  updateMastery();
+}
+probBody.addEventListener('click', e=>{
+  const btn = e.target.closest('.check-btn');
+  if(btn) checkProb(btn.dataset.n);
+});
+probBody.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && (e.target.classList.contains('frac-num') || e.target.classList.contains('frac-den'))){
+    const n = e.target.id.split('-')[1];
+    checkProb(n);
+  }
+});
+
+let masteryCelebrated = false;
+function updateMastery(){
+  const count = FACES.filter(n=>mastered[n]).length;
+  document.getElementById('masteryFill').style.width = (count/6*100)+'%';
+  document.getElementById('masteryLabel').textContent = `${count} / 6 صحيحة`;
+  const msg = document.getElementById('masteryMsg');
+  if(count===6){
+    msg.style.display='block';
+    if(!masteryCelebrated){ masteryCelebrated = true; confettiBurst(); }
+  } else {
+    msg.style.display='none';
+  }
+}
+
+/* ───────────────────────── STEP 2: dice rolling (3D + sound) ───────────────────────── */
+const cube = document.getElementById('cube');
+const rollBtn = document.getElementById('rollBtn');
+const lastResultEl = document.getElementById('lastResult');
+const totalRollsEl = document.getElementById('totalRolls');
+
+const pipLayouts = {
+  1: [5],
+  2: [1,9],
+  3: [1,5,9],
+  4: [1,3,7,9],
+  5: [1,3,5,7,9],
+  6: [1,3,4,6,7,9]
+};
+document.querySelectorAll('.face').forEach(face=>{
+  const n = parseInt(face.dataset.face,10);
+  for(let cell=1; cell<=9; cell++){
+    const pip = document.createElement('div');
+    pip.className = 'pip';
+    if(pipLayouts[n].includes(cell)) pip.style.opacity = 1;
+    face.appendChild(pip);
+  }
+});
+
+/* rotation needed so that given face value ends up facing the viewer (front) */
+const faceToBaseRotation = {
+  1: {x:0,   y:0},
+  6: {x:0,   y:180},
+  2: {x:0,   y:-90},
+  5: {x:0,   y:90},
+  3: {x:-90, y:0},
+  4: {x:90,  y:0}
+};
+let curX = -25, curY = 35;
+let rolling = false;
+const counts = {1:0,2:0,3:0,4:0,5:0,6:0};
+
+function rollDice(){
+  if(rolling) return;
+  rolling = true;
+  rollBtn.disabled = true;
+  cube.classList.add('rolling');
+  sfxRattle();
+
+  const result = 1 + Math.floor(Math.random()*6);
+  const base = faceToBaseRotation[result];
+  const spinsX = 360*(2+Math.floor(Math.random()*2));
+  const spinsY = 360*(3+Math.floor(Math.random()*2));
+  const targetX = base.x + spinsX;
+  const targetY = base.y + spinsY;
+
+  setTimeout(()=>{
+    cube.classList.remove('rolling');
+    cube.style.transform = `rotateX(${targetX}deg) rotateY(${targetY}deg)`;
+    curX = base.x; curY = base.y;
+    sfxThud();
+    lastResultEl.textContent = result;
+    counts[result]++;
+    renderResults();
+    setTimeout(()=>{
+      rolling = false;
+      rollBtn.disabled = false;
+    }, 300);
+  }, 750);
+}
+rollBtn.addEventListener('click', rollDice);
+
+/* ───────────────────────── STEP 3: tally / results table ───────────────────────── */
+const resultsBody = document.getElementById('resultsBody');
+FACES.forEach(n=>{
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><span class="face-chip">${n}</span></td>
+    <td><div class="tally-cell" id="tally-${n}"><span class="tally-empty">لا نتائج بعد</span></div></td>
+    <td><input type="number" min="0" class="answer-input" id="ans-${n}" placeholder="؟"></td>
+    <td><button class="mini-check" data-n="${n}">تحقق</button></td>
+    <td><span class="count-badge" id="real-${n}" style="visibility:hidden">0</span></td>
+  `;
+  resultsBody.appendChild(tr);
+});
+
+function buildTallyMarkup(n){
+  if(n===0) return '<span class="tally-empty">لا نتائج بعد</span>';
+  let html = '';
+  const fullGroups = Math.floor(n/5);
+  const remainder = n%5;
+  for(let g=0; g<fullGroups; g++){
+    html += '<span class="tally-group has5">' + '<span class="tally-stroke"></span>'.repeat(4) + '</span>';
+  }
+  if(remainder>0){
+    html += '<span class="tally-group">' + '<span class="tally-stroke"></span>'.repeat(remainder) + '</span>';
+  }
+  return html;
+}
+
+function renderResults(){
+  let total = 0;
+  FACES.forEach(n=>{
+    document.getElementById(`tally-${n}`).innerHTML = buildTallyMarkup(counts[n]);
+    total += counts[n];
+  });
+  totalRollsEl.textContent = total;
+  document.getElementById('footTotal').textContent = total;
+  document.getElementById('totalTally').innerHTML = `<span class="count-badge">${total}</span> رمية`;
+  FACES.forEach(n=>{
+    const el = document.getElementById(`expfreq-${n}`);
+    if(el) el.textContent = counts[n];
+  });
+}
+renderResults();
+
+function checkAnswer(n){
+  const input = document.getElementById(`ans-${n}`);
+  const realEl = document.getElementById(`real-${n}`);
+  sfxClick();
+  const val = parseInt(input.value,10);
+  if(isNaN(val)){
+    input.classList.add('bad'); input.classList.remove('ok');
+    sfxWrong();
+    return;
+  }
+  if(val === counts[n]){
+    input.classList.add('ok'); input.classList.remove('bad');
+    sfxCorrect();
+  } else {
+    input.classList.add('bad'); input.classList.remove('ok');
+    sfxWrong();
+  }
+  realEl.textContent = counts[n];
+  realEl.style.visibility = 'visible';
+}
+resultsBody.addEventListener('click', e=>{
+  const btn = e.target.closest('.mini-check');
+  if(btn) checkAnswer(btn.dataset.n);
+});
+resultsBody.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && e.target.classList.contains('answer-input')){
+    const n = e.target.id.split('-')[1];
+    checkAnswer(n);
+  }
+});
+
+/* ───────────────────────── STEP 4: experimental probability ───────────────────────── */
+const expBody = document.getElementById('expBody');
+FACES.forEach(n=>{
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><span class="face-chip">${n}</span></td>
+    <td><span class="count-badge" id="expfreq-${n}">0</span></td>
+    <td>
+      <div class="frac-box" id="exp-${n}">
+        <input type="number" class="frac-num" id="exp-${n}-num" min="0" placeholder="؟" inputmode="numeric">
+        <div class="frac-bar"></div>
+        <input type="number" class="frac-den" id="exp-${n}-den" min="1" placeholder="؟" inputmode="numeric">
+      </div>
+    </td>
+    <td><button class="check-btn" data-n="${n}">تحقق</button></td>
+    <td class="fb-cell" id="expfb-${n}"></td>
+  `;
+  expBody.appendChild(tr);
+});
+
+function checkExp(n){
+  const total = FACES.reduce((s,f)=>s+counts[f],0);
+  const box = document.getElementById(`exp-${n}`);
+  const numEl = document.getElementById(`exp-${n}-num`);
+  const denEl = document.getElementById(`exp-${n}-den`);
+  const fb = document.getElementById(`expfb-${n}`);
+  sfxClick();
+
+  if(total === 0){
+    box.classList.remove('ok'); box.classList.add('bad');
+    fb.innerHTML = '⚠️ ارمِ النرد عدة مرات أولًا (الخطوة 2) قبل حساب الاحتمال التجريبي.';
+    fb.className = 'fb-cell fb-bad';
+    typesetEl(fb); sfxWrong();
+    return;
+  }
+
+  const num = parseFloat(numEl.value);
+  const den = parseFloat(denEl.value);
+  const freq = counts[n];
+  const g = gcd(freq, total);
+  const rn = freq/g, rd = total/g;
+
+  if(isNaN(num) || isNaN(den) || den <= 0){
+    box.classList.remove('ok'); box.classList.add('bad');
+    fb.innerHTML = '⚠️ اكتب البسط والمقام كعددين، مثل التكرار فوق عدد التجارب';
+    fb.className = 'fb-cell fb-bad';
+    typesetEl(fb); sfxWrong();
+    return;
+  }
+
+  const correct = Math.abs((num/den) - (freq/total)) < 0.005;
+  if(correct){
+    box.classList.remove('bad'); box.classList.add('ok');
+    fb.innerHTML = (rn===freq && rd===total)
+      ? `✔ صحيح! الاحتمال التجريبي = ${fracHTML(freq,total)}`
+      : `✔ صحيح! الاحتمال التجريبي = ${fracHTML(freq,total)} = ${fracHTML(rn,rd)}`;
+    fb.className = 'fb-cell fb-ok';
+    sfxCorrect();
+  } else {
+    box.classList.remove('ok'); box.classList.add('bad');
+    fb.innerHTML = `✘ غير صحيح. الاحتمال التجريبي = ${fracHTML(freq,total)} (التكرار ÷ عدد التجارب الكلي)`;
+    fb.className = 'fb-cell fb-bad';
+    sfxWrong();
+  }
+  typesetEl(fb);
+}
+expBody.addEventListener('click', e=>{
+  const btn = e.target.closest('.check-btn');
+  if(btn) checkExp(btn.dataset.n);
+});
+expBody.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && (e.target.classList.contains('frac-num') || e.target.classList.contains('frac-den'))){
+    const n = e.target.id.split('-')[1];
+    checkExp(n);
+  }
+});
+
+document.getElementById('checkAllBtn').addEventListener('click', ()=>{
+  let allCorrect = true;
+  let anyAnswered = false;
+  FACES.forEach(n=>{
+    const input = document.getElementById(`ans-${n}`);
+    if(input.value !== ''){
+      anyAnswered = true;
+      checkAnswer(n);
+      const val = parseInt(input.value,10);
+      if(val !== counts[n]) allCorrect = false;
+    } else {
+      allCorrect = false;
+    }
+  });
+  const msg = document.getElementById('totalCheckMsg');
+  if(!anyAnswered){
+    msg.textContent = 'أدخل عددًا لكل حدث أولًا.'; msg.style.color = 'var(--warn)';
+  } else if(allCorrect){
+    msg.textContent = '🎉 ممتاز! كل الأعداد صحيحة، أنت خبير في قراءة جدول العدّ التكراري!';
+    msg.style.color = 'var(--success)';
+    confettiBurst();
+    sfxCorrect();
+  } else {
+    msg.textContent = 'بعض الإجابات غير صحيحة، راجع الجدول مرة أخرى وحاول من جديد.';
+    msg.style.color = 'var(--danger)';
+    sfxWrong();
+  }
+});
+
+/* ───────────────────────── reset ───────────────────────── */
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  if(!confirm('هل تريد إعادة ضبط التجربة بالكامل؟ سيتم مسح كل النتائج والإجابات.')) return;
+  FACES.forEach(n=>{
+    counts[n] = 0;
+    mastered[n] = false;
+    document.getElementById(`prob-${n}-num`).value = '';
+    document.getElementById(`prob-${n}-den`).value = '';
+    document.getElementById(`prob-${n}`).className = 'frac-box';
+    document.getElementById(`fb-${n}`).textContent = '';
+    document.getElementById(`ans-${n}`).value = '';
+    document.getElementById(`ans-${n}`).className = 'answer-input';
+    document.getElementById(`real-${n}`).style.visibility = 'hidden';
+    document.getElementById(`exp-${n}-num`).value = '';
+    document.getElementById(`exp-${n}-den`).value = '';
+    document.getElementById(`exp-${n}`).className = 'frac-box';
+    document.getElementById(`expfb-${n}`).textContent = '';
+  });
+  masteryCelebrated = false;
+  updateMastery();
+  renderResults();
+  lastResultEl.textContent = '—';
+  document.getElementById('totalCheckMsg').textContent = '';
+  cube.style.transform = 'rotateX(-25deg) rotateY(35deg)';
+});
+
+if(window.MathJax && MathJax.startup && MathJax.startup.promise){
+  MathJax.startup.promise.then(()=>MathJax.typesetPromise());
+} else {
+  window.addEventListener('load', ()=>typesetEl(document.body));
+}
+</script>
+</body>
+</html>
