@@ -40,6 +40,7 @@ def initialize():
         CREATE TABLE IF NOT EXISTS attempts(id TEXT PRIMARY KEY, student TEXT, mode TEXT, questions TEXT, answers TEXT DEFAULT '[]', current_started REAL, finished INTEGER DEFAULT 0);
         CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
         CREATE TABLE IF NOT EXISTS work_samples(student TEXT, slide INTEGER, reasoning TEXT, strokes TEXT, updated REAL, PRIMARY KEY(student,slide));
+        CREATE TABLE IF NOT EXISTS journeys(student TEXT PRIMARY KEY, kind TEXT, scene INTEGER, red INTEGER DEFAULT 1, selection TEXT DEFAULT '[]', selection_error INTEGER DEFAULT 0, updated REAL);
         CREATE TABLE IF NOT EXISTS explorations(student TEXT, kind TEXT, step INTEGER DEFAULT 0, seen TEXT DEFAULT '[0]', correct INTEGER DEFAULT 0, tries INTEGER DEFAULT 0, updated REAL, PRIMARY KEY(student,kind));
         CREATE TABLE IF NOT EXISTS labs(student TEXT, kind TEXT, red INTEGER, counts TEXT DEFAULT '[]', history TEXT DEFAULT '[]', selection TEXT DEFAULT '[]', numerator INTEGER, denominator INTEGER, tries INTEGER DEFAULT 0, solved INTEGER DEFAULT 0, latest_correct INTEGER, feedback TEXT DEFAULT '', updated REAL, PRIMARY KEY(student,kind,red));
         CREATE TABLE IF NOT EXISTS reflections(id INTEGER PRIMARY KEY CHECK(id=1), content TEXT DEFAULT '');
@@ -225,14 +226,14 @@ class Handler(SimpleHTTPRequestHandler):
                     student = dict(db.execute('SELECT * FROM students WHERE id=?', (sid,)).fetchone())
                     attempts = [public_attempt(advance_expired(db, a)) for a in db.execute('SELECT * FROM attempts WHERE student=? ORDER BY rowid', (sid,)).fetchall()]
                     db.commit()
-                    return self.send_json(200, {'role':role,'student':student,'lesson':student_lesson(lesson),'attempts':attempts,'labs':[dict(l) for l in db.execute('SELECT * FROM labs WHERE student=?',(sid,))],'explorations':[dict(e) for e in db.execute('SELECT * FROM explorations WHERE student=?',(sid,))],'samples':[dict(w) for w in db.execute('SELECT * FROM work_samples WHERE student=?',(sid,))],'control':control,'work':dict(db.execute('SELECT * FROM work WHERE student=?',(sid,)).fetchone() or {})})
+                    return self.send_json(200, {'role':role,'student':student,'lesson':student_lesson(lesson),'attempts':attempts,'journey':next((dict(j) for j in db.execute('SELECT * FROM journeys WHERE student=?',(sid,))),None),'labs':[dict(l) for l in db.execute('SELECT * FROM labs WHERE student=?',(sid,))],'explorations':[dict(e) for e in db.execute('SELECT * FROM explorations WHERE student=?',(sid,))],'samples':[dict(w) for w in db.execute('SELECT * FROM work_samples WHERE student=?',(sid,))],'control':control,'work':dict(db.execute('SELECT * FROM work WHERE student=?',(sid,)).fetchone() or {})})
                 if role == 'teacher':
                     if path == '/api/dashboard' and method == 'GET':
                         rows = db.execute('SELECT * FROM attempts').fetchall()
                         attempts = [dict(advance_expired(db,a)) for a in rows]
                         students = [dict(s) for s in db.execute('SELECT * FROM students ORDER BY created')]
                         db.commit()
-                        return self.send_json(200, {'students':students,'attempts':[{'student':a['student'],**public_attempt(a)} for a in attempts], 'lesson':settings(db), 'serverNow':time.time()*1000, 'labs':[dict(l) for l in db.execute('SELECT * FROM labs')], 'explorations':[dict(e) for e in db.execute('SELECT * FROM explorations')], 'reflection':db.execute('SELECT content FROM reflections WHERE id=1').fetchone()[0], 'samples':[dict(w) for w in db.execute('SELECT * FROM work_samples')], 'work':[dict(w) for w in db.execute('SELECT * FROM work')], 'control':json.loads(db.execute("SELECT value FROM settings WHERE key='control'").fetchone()[0])})
+                        return self.send_json(200, {'students':students,'attempts':[{'student':a['student'],**public_attempt(a)} for a in attempts], 'lesson':settings(db), 'serverNow':time.time()*1000, 'journeys':[dict(j) for j in db.execute('SELECT * FROM journeys')],'labs':[dict(l) for l in db.execute('SELECT * FROM labs')], 'explorations':[dict(e) for e in db.execute('SELECT * FROM explorations')], 'reflection':db.execute('SELECT content FROM reflections WHERE id=1').fetchone()[0], 'samples':[dict(w) for w in db.execute('SELECT * FROM work_samples')], 'work':[dict(w) for w in db.execute('SELECT * FROM work')], 'control':json.loads(db.execute("SELECT value FROM settings WHERE key='control'").fetchone()[0])})
                     if path == '/api/reflection' and method == 'POST':
                         db.execute('UPDATE reflections SET content=? WHERE id=1',(str(body.get('content',''))[:6000],))
                         db.commit()
@@ -306,6 +307,20 @@ class Handler(SimpleHTTPRequestHandler):
                         db.execute('INSERT OR REPLACE INTO work_samples VALUES(?,?,?,?,?)',(sid,page,str(body.get('reasoning',''))[:3000],json.dumps(strokes),time.time()))
                     db.commit()
                     return self.send_json(200,{'ok':True})
+                if path == '/api/scene' and method == 'POST':
+                    kind=body.get('kind'); scene=body.get('scene'); red=body.get('red',1)
+                    if kind not in ('coin','dice','spinner') or type(scene) is not int or scene not in range(5) or type(red) is not int or red not in (1,2,3):
+                        raise ValueError('Invalid adventure scene.')
+                    db.execute('INSERT OR IGNORE INTO journeys(student,kind,scene,updated) VALUES(?,?,?,?)',(sid,kind,scene,time.time()))
+                    selection=body.get('selection',[])
+                    total={'coin':2,'dice':6,'spinner':4}[kind]
+                    if not isinstance(selection,list) or len(selection)>6 or any(type(i) is not int or i not in range(total) for i in selection):
+                        raise ValueError('Invalid selected outcomes.')
+                    wanted={'coin':[0],'dice':[1,3,5],'spinner':list(range(red))}[kind]
+                    error=int(bool(body.get('check_selection')) and set(selection)!=set(wanted))
+                    db.execute('UPDATE journeys SET kind=?,scene=?,red=?,selection=?,selection_error=?,updated=? WHERE student=?',(kind,scene,red,json.dumps(selection),error,time.time(),sid))
+                    db.commit()
+                    return self.send_json(200,{'journey':dict(db.execute('SELECT * FROM journeys WHERE student=?',(sid,)).fetchone())})
                 if path == '/api/lab' and method == 'POST':
                     kind=body.get('kind'); red=int(body.get('red',1))
                     if kind not in ('coin','dice','spinner') or red not in (1,2,3):

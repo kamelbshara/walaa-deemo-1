@@ -137,6 +137,25 @@ class ClassroomTest(unittest.TestCase):
         with self.assertRaises(urllib.error.HTTPError):self.req(s,'lab',{'action':'trial','kind':'coin','red':1,'count':100})
         with self.assertRaises(urllib.error.HTTPError):self.req(s,'lab',{**body,'numerator':1.5})
 
+    def test_story_scene_resume_and_live_diagnostic(self):
+        student,teacher=self.student(),self.teacher()
+        body={'kind':'spinner','scene':2,'red':3,'selection':[0],'check_selection':True}
+        journey=self.req(student,'scene',body)['journey']
+        self.assertEqual(journey['selection_error'],1)
+        sid=self.req(student,'state')['student']['id']
+        observed=next(j for j in self.req(teacher,'dashboard')['journeys'] if j['student']==sid)
+        self.assertEqual(observed['scene'],2)
+        self.assertEqual(observed['selection_error'],1)
+        self.req(student,'scene',{**body,'scene':4,'selection':[0,1,2]})
+        resumed=self.req(student,'state')['journey']
+        self.assertEqual(resumed['red'],3)
+        self.assertEqual(resumed['scene'],4)
+        self.assertEqual(resumed['selection_error'],0)
+        self.assertEqual(json.loads(resumed['selection']),[0,1,2])
+        for invalid in [{'scene':5},{'scene':True},{'red':0},{'selection':[99]}]:
+            with self.assertRaises(urllib.error.HTTPError):self.req(student,'scene',{**body,**invalid})
+        with self.assertRaises(urllib.error.HTTPError):self.req(teacher,'scene',body)
+
     def test_bank_integrity_and_limits(self):
         self.assertEqual(len(server.BANK),37)
         for q in server.BANK:
