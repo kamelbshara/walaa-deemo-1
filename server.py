@@ -41,6 +41,7 @@ def initialize():
         CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
         CREATE TABLE IF NOT EXISTS work_samples(student TEXT, slide INTEGER, reasoning TEXT, strokes TEXT, updated REAL, PRIMARY KEY(student,slide));
         CREATE TABLE IF NOT EXISTS explorations(student TEXT, kind TEXT, step INTEGER DEFAULT 0, seen TEXT DEFAULT '[0]', correct INTEGER DEFAULT 0, tries INTEGER DEFAULT 0, updated REAL, PRIMARY KEY(student,kind));
+        CREATE TABLE IF NOT EXISTS labs(student TEXT, kind TEXT, red INTEGER, counts TEXT DEFAULT '[]', history TEXT DEFAULT '[]', selection TEXT DEFAULT '[]', numerator INTEGER, denominator INTEGER, tries INTEGER DEFAULT 0, solved INTEGER DEFAULT 0, latest_correct INTEGER, feedback TEXT DEFAULT '', updated REAL, PRIMARY KEY(student,kind,red));
         CREATE TABLE IF NOT EXISTS reflections(id INTEGER PRIMARY KEY CHECK(id=1), content TEXT DEFAULT '');
         INSERT OR IGNORE INTO reflections VALUES(1,'');
         CREATE TABLE IF NOT EXISTS work(student TEXT PRIMARY KEY, reasoning TEXT DEFAULT '', strokes TEXT DEFAULT '[]', feedback TEXT DEFAULT '', help INTEGER DEFAULT 0, updated REAL);
@@ -154,7 +155,7 @@ class Handler(SimpleHTTPRequestHandler):
         path = urlparse(self.path).path
         if path.startswith('/api/'):
             self.api('GET', path, {})
-        elif path in ('/', '/index.html', '/app.js', '/studio.js', '/style.css', '/warm-theme.css', '/dice-lab.html', '/lesson-plan.md', '/vendor/mathjax/tex-svg.js'):
+        elif path in ('/', '/index.html', '/app.js', '/studio.js', '/playground.js', '/playground.css', '/style.css', '/warm-theme.css', '/dice-lab.html', '/lesson-plan.md', '/vendor/mathjax/tex-svg.js'):
             super().do_GET()
         else:
             self.send_error(404)
@@ -224,14 +225,14 @@ class Handler(SimpleHTTPRequestHandler):
                     student = dict(db.execute('SELECT * FROM students WHERE id=?', (sid,)).fetchone())
                     attempts = [public_attempt(advance_expired(db, a)) for a in db.execute('SELECT * FROM attempts WHERE student=? ORDER BY rowid', (sid,)).fetchall()]
                     db.commit()
-                    return self.send_json(200, {'role':role,'student':student,'lesson':student_lesson(lesson),'attempts':attempts,'explorations':[dict(e) for e in db.execute('SELECT * FROM explorations WHERE student=?',(sid,))],'samples':[dict(w) for w in db.execute('SELECT * FROM work_samples WHERE student=?',(sid,))],'control':control,'work':dict(db.execute('SELECT * FROM work WHERE student=?',(sid,)).fetchone() or {})})
+                    return self.send_json(200, {'role':role,'student':student,'lesson':student_lesson(lesson),'attempts':attempts,'labs':[dict(l) for l in db.execute('SELECT * FROM labs WHERE student=?',(sid,))],'explorations':[dict(e) for e in db.execute('SELECT * FROM explorations WHERE student=?',(sid,))],'samples':[dict(w) for w in db.execute('SELECT * FROM work_samples WHERE student=?',(sid,))],'control':control,'work':dict(db.execute('SELECT * FROM work WHERE student=?',(sid,)).fetchone() or {})})
                 if role == 'teacher':
                     if path == '/api/dashboard' and method == 'GET':
                         rows = db.execute('SELECT * FROM attempts').fetchall()
                         attempts = [dict(advance_expired(db,a)) for a in rows]
                         students = [dict(s) for s in db.execute('SELECT * FROM students ORDER BY created')]
                         db.commit()
-                        return self.send_json(200, {'students':students,'attempts':[{'student':a['student'],**public_attempt(a)} for a in attempts], 'lesson':settings(db), 'serverNow':time.time()*1000, 'explorations':[dict(e) for e in db.execute('SELECT * FROM explorations')], 'reflection':db.execute('SELECT content FROM reflections WHERE id=1').fetchone()[0], 'samples':[dict(w) for w in db.execute('SELECT * FROM work_samples')], 'work':[dict(w) for w in db.execute('SELECT * FROM work')], 'control':json.loads(db.execute("SELECT value FROM settings WHERE key='control'").fetchone()[0])})
+                        return self.send_json(200, {'students':students,'attempts':[{'student':a['student'],**public_attempt(a)} for a in attempts], 'lesson':settings(db), 'serverNow':time.time()*1000, 'labs':[dict(l) for l in db.execute('SELECT * FROM labs')], 'explorations':[dict(e) for e in db.execute('SELECT * FROM explorations')], 'reflection':db.execute('SELECT content FROM reflections WHERE id=1').fetchone()[0], 'samples':[dict(w) for w in db.execute('SELECT * FROM work_samples')], 'work':[dict(w) for w in db.execute('SELECT * FROM work')], 'control':json.loads(db.execute("SELECT value FROM settings WHERE key='control'").fetchone()[0])})
                     if path == '/api/reflection' and method == 'POST':
                         db.execute('UPDATE reflections SET content=? WHERE id=1',(str(body.get('content',''))[:6000],))
                         db.commit()
@@ -305,6 +306,42 @@ class Handler(SimpleHTTPRequestHandler):
                         db.execute('INSERT OR REPLACE INTO work_samples VALUES(?,?,?,?,?)',(sid,page,str(body.get('reasoning',''))[:3000],json.dumps(strokes),time.time()))
                     db.commit()
                     return self.send_json(200,{'ok':True})
+                if path == '/api/lab' and method == 'POST':
+                    kind=body.get('kind'); red=int(body.get('red',1))
+                    if kind not in ('coin','dice','spinner') or red not in (1,2,3):
+                        raise ValueError('Invalid activity.')
+                    if kind!='spinner':red=1
+                    total={'coin':2,'dice':6,'spinner':4}[kind]
+                    wanted={'coin':[0],'dice':[1,3,5],'spinner':list(range(red))}[kind]
+                    db.execute('INSERT OR IGNORE INTO labs(student,kind,red,counts,updated) VALUES(?,?,?,?,?)',(sid,kind,red,json.dumps([0]*total),time.time()))
+                    row=db.execute('SELECT * FROM labs WHERE student=? AND kind=? AND red=?',(sid,kind,red)).fetchone()
+                    action=body.get('action'); results=[]; correct=None; feedback=''
+                    if action=='trial':
+                        count=int(body.get('count',1))
+                        if count not in (1,10):raise ValueError('Use one or ten trials.')
+                        counts=json.loads(row['counts']); history=json.loads(row['history'])
+                        results=[secrets.randbelow(total) for _ in range(count)]
+                        for result in results:counts[result]+=1
+                        history=(history+results)[-12:]
+                        db.execute('UPDATE labs SET counts=?,history=?,updated=? WHERE student=? AND kind=? AND red=?',(json.dumps(counts),json.dumps(history),time.time(),sid,kind,red))
+                    elif action=='check':
+                        chosen=body.get('selection',[])
+                        if not isinstance(chosen,list) or len(chosen)>total or any(type(i)!=int or i not in range(total) for i in chosen):raise ValueError('Choose valid outcomes.')
+                        n=body.get('numerator',-1); d=body.get('denominator',-1)
+                        if type(n)!=int or type(d)!=int or not 0<=n<=6 or not 1<=d<=6:raise ValueError('Use whole outcome counts; denominator must be positive.')
+                        correct=set(chosen)==set(wanted) and n==len(wanted) and d==total
+                        if set(chosen)!=set(wanted):
+                            feedback='selection'
+                        elif d!=total:
+                            feedback='denominator'
+                        elif n!=len(wanted):
+                            feedback='numerator'
+                        else:feedback='solved'
+                        db.execute('UPDATE labs SET selection=?,numerator=?,denominator=?,tries=tries+1,solved=?,latest_correct=?,feedback=?,updated=? WHERE student=? AND kind=? AND red=?',(json.dumps(sorted(set(chosen))),n,d,max(row['solved'],int(correct)),int(correct),feedback,time.time(),sid,kind,red))
+                    else:raise ValueError('Unknown activity action.')
+                    result=dict(db.execute('SELECT * FROM labs WHERE student=? AND kind=? AND red=?',(sid,kind,red)).fetchone())
+                    db.commit()
+                    return self.send_json(200,{'lab':result,'results':results,'correct':correct,'feedback':feedback})
                 if path == '/api/explore' and method == 'POST':
                     kind=body.get('kind'); step=int(body.get('step',0))
                     if kind not in ('coin','dice','spinner') or step not in range(5):

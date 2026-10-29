@@ -17,7 +17,10 @@ The former standalone dice activity is retained in `dice-lab.html` as an optiona
 
 ## Classroom features
 
-- Eight bilingual slides: introduction, interactive video, revision card, dirham question, 10-question sprint, 12-question mastery game, exit poll, personal progress.
+- Eight bilingual slides: introduction, interactive video, chance arcade with revision card, dirham question, 10-question sprint, 12-question mastery game, exit poll, personal progress.
+- Chance arcade: predict, animate a fair coin/die/spinner trial, run ten trials, and compare a live frequency chart with theoretical probability. Change the number of coral spinner sectors, select favorable outcomes, and build the count fraction. Server-generated outcomes and saved attempts resume with the student session. Sound is optional; reduced-motion preferences are respected.
+- Adaptive coaching distinguishes outcome selection, numerator, and denominator errors, with expanded worked explanations after repeated mistakes. Three discovery stamps award 120 points each once per experiment type, with no penalties for retries. Discovery points measure guided participation, separately from timed-game mastery.
+- The teacher dashboard and printable class report include experimental counts, selected outcomes, fraction attempts, and the latest difficulty for targeted intervention.
 - Teacher-led slide synchronization or student-paced navigation. Monitoring updates every 4–5 seconds while connected.
 - Student text and drawing space, raised hands, private teacher feedback, live work gallery, assessment details, leaderboard.
 - YouTube editor: unlisted video link, timestamped MCQs, first-response recording, pause until answer. Checkpoints also appear after seeking past them. Video embedding must be enabled in YouTube Studio. The supplied video KzfWUEJjG18 is preconfigured in lesson-video.json. The player shows source seconds 8–258 (4:10 total). Checkpoints at clip seconds 105, 215, and 227 correspond to source seconds 113, 223, and 235.

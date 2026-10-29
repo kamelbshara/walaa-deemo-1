@@ -112,6 +112,31 @@ class ClassroomTest(unittest.TestCase):
         self.assertTrue(all(e['correct']==1 for e in observed))
         with self.assertRaises(urllib.error.HTTPError):self.req(s,'explore',{'kind':'invalid','step':0})
 
+    def test_playground_experiments_feedback_and_monitoring(self):
+        s,t=self.student(),self.teacher()
+        sid=self.req(s,'state')['student']['id']
+        for kind,total,selection,n in [('coin',2,[0],1),('dice',6,[1,3,5],3),('spinner',4,[0,1,2],3)]:
+            red=3 if kind=='spinner' else 1
+            trial=self.req(s,'lab',{'action':'trial','kind':kind,'red':red,'count':10})
+            self.assertEqual(sum(json.loads(trial['lab']['counts'])),10)
+            self.assertTrue(all(0<=x<total for x in trial['results']))
+            body={'action':'check','kind':kind,'red':red,'selection':selection,'numerator':n,'denominator':total}
+            wrong=self.req(s,'lab',{**body,'selection':[]})
+            self.assertEqual(wrong['feedback'],'selection')
+            wrong=self.req(s,'lab',{**body,'denominator':1})
+            self.assertEqual(wrong['feedback'],'denominator')
+            wrong=self.req(s,'lab',{**body,'numerator':0})
+            self.assertEqual(wrong['feedback'],'numerator')
+            right=self.req(s,'lab',body)
+            self.assertTrue(right['correct']);self.assertEqual(right['lab']['solved'],1)
+            again=self.req(s,'lab',body)
+            self.assertEqual(again['lab']['solved'],1)
+        observed=[l for l in self.req(t,'dashboard')['labs'] if l['student']==sid]
+        self.assertEqual(len(observed),3)
+        self.assertEqual(len(self.req(s,'state')['labs']),3)
+        with self.assertRaises(urllib.error.HTTPError):self.req(s,'lab',{'action':'trial','kind':'coin','red':1,'count':100})
+        with self.assertRaises(urllib.error.HTTPError):self.req(s,'lab',{**body,'numerator':1.5})
+
     def test_bank_integrity_and_limits(self):
         self.assertEqual(len(server.BANK),37)
         for q in server.BANK:

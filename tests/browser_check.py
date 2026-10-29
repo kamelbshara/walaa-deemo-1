@@ -38,7 +38,27 @@ with sync_playwright() as p:
     s.goto(BASE);s.locator('[name=name]').fill('Mariam · مريم');s.locator('[name=code]').fill('WALAA9');s.locator('button[type=submit]').click();s.wait_for_selector('.cover')
     s.wait_for_timeout(400);s.screenshot(path=str(OUT/'student-cover.png'),full_page=True)
     assert s.locator('.cover').inner_text().find('Walaa Falah')==-1 # credit strip is separate
-    s.locator('[data-action=navigate][data-slide="2"]').click();s.wait_for_selector('.discovery-studio')
+    s.locator('.lesson-nav [data-action=navigate][data-slide="2"]').click();s.wait_for_selector('#chancePlayground')
+    for kind,selection,n,d in [('coin',[0],1,2),('dice',[1,3,5],3,6),('spinner',[0,1,2],3,4)]:
+        s.locator(f'[data-play=choose][data-kind="{kind}"]').click()
+        if kind=='spinner':s.locator('[data-play=red][data-red="3"]').click()
+        assert s.locator('[data-play=trial][data-count="1"]').is_disabled()
+        s.locator('[data-play=predict][data-prediction=yes]').click()
+        s.locator('[data-play=trial][data-count="10"]').click()
+        s.wait_for_function('!playBusy')
+        assert s.evaluate('JSON.parse(playRecord().counts).reduce((a,b)=>a+b,0)')==10
+        for i in selection:s.locator(f'[data-play=select][data-index="{i}"]').click()
+        s.locator('#playNumerator').fill(str(n));s.locator('#playDenominator').fill('1')
+        s.locator('[data-play=check]').click();s.wait_for_selector('.mission-retry')
+        assert 'bottom' in s.locator('#missionFeedback').inner_text()
+        s.locator('#playDenominator').fill(str(d));s.locator('[data-play=check]').click();s.wait_for_selector('.mission-won')
+    assert s.evaluate('playWins()')==3
+    s.screenshot(path=str(OUT/'chance-playground.png'),full_page=True,animations='disabled')
+    s.set_viewport_size({'width':390,'height':844})
+    assert s.evaluate('document.documentElement.scrollWidth<=innerWidth')
+    s.screenshot(path=str(OUT/'chance-playground-mobile.png'),full_page=True,animations='disabled')
+    s.set_viewport_size({'width':1440,'height':1000})
+    s.locator('.guide-details').first.locator('summary').first.click();s.wait_for_selector('.discovery-studio')
     for kind,answer in [('coin','1/2'),('dice','3/6'),('spinner','1/4')]:
         s.locator(f'[data-studio=example][data-kind="{kind}"]').click()
         for step in range(1,5):
@@ -53,7 +73,7 @@ with sync_playwright() as p:
     assert s.evaluate('document.documentElement.scrollWidth<=innerWidth')
     s.screenshot(path=str(OUT/'worked-studio-mobile.png'),full_page=True,animations='disabled')
     s.set_viewport_size({'width':1440,'height':1000})
-    s.locator('[data-action=navigate][data-slide="0"]').click();s.wait_for_selector('.cover')
+    s.locator('.lesson-nav [data-action=navigate][data-slide="0"]').click();s.wait_for_selector('.cover')
     obj=s.locator('.cover-art .coin-obj');obj.focus();obj.press('ArrowRight');assert 'translate' in obj.get_attribute('style')
     s.locator('[data-action=thinking]').first.click();s.locator('#reasoning').fill('There are 2 equally likely outcomes, so P(heads) = 1/2.')
     canvas=s.locator('#thinkingCanvas').bounding_box();s.mouse.move(canvas['x']+20,canvas['y']+20);s.mouse.down();s.mouse.move(canvas['x']+130,canvas['y']+70,steps=8);s.mouse.up();s.locator('[data-action=save-work]').click();s.locator('[data-action=raise-hand]').click();s.wait_for_timeout(600)
@@ -67,15 +87,15 @@ with sync_playwright() as p:
     s.locator('[data-action=coin-answer][data-choice="1"]').click();s.wait_for_selector('#coinFeedback .feedback');assert 'Exactly' in s.locator('#coinFeedback').inner_text()
     # Test checkpoint UI with a controlled player double. Real YouTube is external.
     s.evaluate("""window.YT={Player:function(id,opts){this.getCurrentTime=()=>2;this.pauseVideo=()=>{};this.playVideo=()=>{};this.destroy=()=>{};setTimeout(()=>opts.events.onReady(),10)}}""")
-    s.locator('[data-action=navigate][data-slide="1"]').click();s.wait_for_selector('#videoQuestion:not([hidden])');s.locator('[data-action=video-answer][data-choice="1"]').click();s.wait_for_selector('[data-action=video-continue]');s.locator('[data-action=video-continue]').click();assert s.locator('#videoQuestion').is_hidden()
-    s.locator('[data-action=navigate][data-slide="4"]').click();s.locator('[data-action=start-game]').click();s.wait_for_selector('#timer')
+    s.locator('.lesson-nav [data-action=navigate][data-slide="1"]').click();s.wait_for_selector('#videoQuestion:not([hidden])');s.locator('[data-action=video-answer][data-choice="1"]').click();s.wait_for_selector('[data-action=video-continue]');s.locator('[data-action=video-continue]').click();assert s.locator('#videoQuestion').is_hidden()
+    s.locator('.lesson-nav [data-action=navigate][data-slide="4"]').click();s.locator('[data-action=start-game]').click();s.wait_for_selector('#timer')
     for i in range(10):
         s.wait_for_selector('[data-action=game-answer]')
         qid=s.evaluate('activeGame.question.id');correct=server.BANK[qid]['correct']
         s.locator(f'[data-action=game-answer][data-choice="{correct}"]').click()
         s.wait_for_function('(i)=>activeGame.index>i',arg=i)
     assert '100%' in s.locator('#gamePanel').inner_text();s.locator('#gamePanel summary').click();assert 'undefined' not in s.locator('#gamePanel').inner_text()
-    s.locator('[data-action=navigate][data-slide="5"]').first.click();s.locator('[data-action=start-game]').click()
+    s.locator('.lesson-nav [data-action=navigate][data-slide="5"]').first.click();s.locator('[data-action=start-game]').click()
     for i in range(12):
         if s.locator('[data-action=resume-game]').count():
             s.wait_for_selector('.worked mjx-container svg')
@@ -85,8 +105,8 @@ with sync_playwright() as p:
         s.wait_for_selector('[data-action=game-answer]');qid=s.evaluate('activeGame.question.id');correct=server.BANK[qid]['correct'];choice=correct if i<10 else (correct+1)%4
         s.locator(f'[data-action=game-answer][data-choice="{choice}"]').click();s.wait_for_function('(i)=>activeGame.index>i',arg=i)
     assert '83.3%' in s.locator('#gamePanel').inner_text();assert 'goal' in s.locator('#gamePanel').inner_text()
-    s.locator('[data-action=navigate][data-slide="6"]').click();s.locator('[data-action=poll][data-choice="1"]').click();s.wait_for_selector('#pollFeedback .feedback')
-    s.locator('[data-action=navigate][data-slide="7"]').click();s.wait_for_selector('[data-action=print-progress]');assert '83.3%' in s.locator('#slideContent').inner_text();s.locator('[data-action=print-progress]').click();s.wait_for_selector('#printRoot .print-report',state='attached');s.emulate_media(media='print');s.pdf(path=str(OUT/'student-progress.pdf'),format='A4',landscape=True,print_background=True);s.emulate_media(media='screen')
+    s.locator('.lesson-nav [data-action=navigate][data-slide="6"]').click();s.locator('[data-action=poll][data-choice="1"]').click();s.wait_for_selector('#pollFeedback .feedback')
+    s.locator('.lesson-nav [data-action=navigate][data-slide="7"]').click();s.wait_for_selector('[data-action=print-progress]');assert '83.3%' in s.locator('#slideContent').inner_text();s.locator('[data-action=print-progress]').click();s.wait_for_selector('#printRoot .print-report',state='attached');s.emulate_media(media='print');s.pdf(path=str(OUT/'student-progress.pdf'),format='A4',landscape=True,print_background=True);s.emulate_media(media='screen')
     t.locator('.teacher-tabs [data-tab=report]').click();t.wait_for_selector('.report-header');assert 'Mariam' in t.locator('#teacherPanel').inner_text();assert 'Observed students' in t.locator('#teacherPanel').inner_text()
     t.locator('[data-action=print-report]').click();t.wait_for_selector('#printRoot .print-report',state='attached');t.emulate_media(media='print');t.pdf(path=str(OUT/'class-report.pdf'),format='A4',landscape=True,print_background=True);t.emulate_media(media='screen')
     t.locator('[data-action=print-lesson]').click();t.wait_for_selector('#printRoot .print-page',state='attached');assert t.locator('#printRoot .print-question').count()>=22;t.emulate_media(media='print');t.pdf(path=str(OUT/'lesson-materials.pdf'),format='A4',landscape=True,print_background=True);t.emulate_media(media='screen')
@@ -96,7 +116,7 @@ with sync_playwright() as p:
     s.reload();s.wait_for_selector('.workspace')
     s.evaluate("""window.clipTime=8;window.clipPaused=false;window.YT={Player:function(id,opts){window.clipConfig=opts.playerVars;this.getCurrentTime=()=>window.clipTime;this.seekTo=(t)=>{window.clipTime=t};this.pauseVideo=()=>{window.clipPaused=true};this.playVideo=()=>{window.clipPaused=false};this.destroy=()=>{};setTimeout(()=>opts.events.onReady(),10)}}""")
     s.locator('[data-action=menu]').count() # keep desktop navigation
-    s.locator('[data-action=navigate][data-slide="1"]').click()
+    s.locator('.lesson-nav [data-action=navigate][data-slide="1"]').click()
     s.wait_for_function('window.clipConfig?.start===8 && window.clipConfig.end===258')
     for i,(absolute,answer) in enumerate([(113,1),(223,0),(235,2)]):
         s.evaluate('(t)=>window.clipTime=t',absolute)
@@ -116,9 +136,9 @@ with sync_playwright() as p:
     assert len(json.loads(saved))==3
     print('PASS: requested 8–258 segment, 105/215/227 relative checkpoints, true/false, auto-resume, end boundary, and saved responses.')
     # Small screen coverage and resume through the session cookie.
-    s.set_viewport_size({'width':390,'height':844});s.reload();s.wait_for_selector('.workspace');s.locator('[data-action=menu]').click();s.locator('[data-action=navigate][data-slide="0"]').click();s.wait_for_selector('.cover');s.screenshot(path=str(OUT/'student-mobile.png'),full_page=True)
+    s.set_viewport_size({'width':390,'height':844});s.reload();s.wait_for_selector('.workspace');s.locator('[data-action=menu]').click();s.locator('.lesson-nav [data-action=navigate][data-slide="0"]').click();s.wait_for_selector('.cover');s.screenshot(path=str(OUT/'student-mobile.png'),full_page=True)
     assert s.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
-    s.locator('[data-action=menu]').click();s.locator('[data-action=navigate][data-slide="5"]').click();s.wait_for_selector('#gamePanel');assert '83.3%' in s.locator('#gamePanel').inner_text()
+    s.locator('[data-action=menu]').click();s.locator('.lesson-nav [data-action=navigate][data-slide="5"]').click();s.wait_for_selector('#gamePanel');assert '83.3%' in s.locator('#gamePanel').inner_text()
     assert not errors,errors
     print('PASS: separate teacher/student sessions, lesson plan, editor, video checkpoint double, saved drawing/text, help, feedback, teacher-led pacing, student-paced navigation, both complete games, mastery, review, exit poll, resume, four print exports, desktop/mobile layout; no JavaScript errors.')
     b.close()
