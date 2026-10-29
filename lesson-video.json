@@ -1,0 +1,47 @@
+{
+  "videoId": "KzfWUEJjG18",
+  "start": 8,
+  "end": 258,
+  "checkpoints": [
+    {
+      "id": "probability-range",
+      "at": 105,
+      "en": "The probability of an event can be greater than 1.",
+      "ar": "يمكن أن يكون احتمال الحدث أكبر من ١.",
+      "options": [
+        "True · صح",
+        "False · خطأ"
+      ],
+      "correct": 1,
+      "explanation": "False. Probability compares favorable outcomes with all equally likely outcomes. The favorable outcomes are part of the total, so the fraction cannot exceed 1. An impossible event has probability 0; a certain event has probability 1. For example, rolling a number from 1 to 6 on a standard die has probability 6/6 = 1, never more.\nخطأ. نقسم عدد النواتج المرغوبة على عدد النواتج الكلية المتساوية الاحتمال. النواتج المرغوبة جزء من الكل، لذلك لا يزيد الكسر على ١. الحدث المستحيل احتماله ٠ والمؤكد احتماله ١. مثلاً ظهور عدد من ١ إلى ٦ على نرد عادي احتماله ٦/٦ = ١."
+    },
+    {
+      "id": "coin-heads",
+      "at": 215,
+      "en": "What is the probability of getting heads when a fair coin is flipped once?",
+      "ar": "ما احتمال ظهور وجه الدلة عند قلب عملة عادلة مرة واحدة؟",
+      "options": [
+        "1/2 or 0.5 · ١/٢ أو ٠٫٥",
+        "2 · ٢",
+        "1 · ١",
+        "0 · ٠"
+      ],
+      "correct": 0,
+      "explanation": "Step 1: List the outcomes: heads and tails. There are 2 equally likely outcomes. Step 2: Heads is the only favorable outcome, so there is 1. Step 3: P(heads) = 1/2 = 0.5 = 50%. The answer 2 counts outcomes but is not a probability. The answer 1 would mean heads is guaranteed, and 0 would mean it is impossible. Neither is true for a fair coin.\n١. النواتج الممكنة: وجه الدلة ووجه الرقم، أي نتيجتان متساويتا الاحتمال. ٢. النتيجة المرغوبة هي وجه الدلة فقط، وعددها ١. ٣. الاحتمال = ١/٢ = ٠٫٥ = ٥٠٪. العدد ٢ هو عدد النواتج وليس الاحتمال. والعدد ١ يعني نتيجة مؤكدة، و٠ يعني نتيجة مستحيلة؛ وكلاهما لا يصف ظهور وجه الدلة."
+    },
+    {
+      "id": "die-outcomes",
+      "at": 227,
+      "en": "What are the possible outcomes when rolling a standard die once, and how many are there?",
+      "ar": "ما النواتج الممكنة لرمي نرد عادي مرة واحدة؟ وكم عددها؟",
+      "options": [
+        "2 outcomes {1, 2} · نتيجتان",
+        "4 outcomes {red, blue, green, yellow} · أربعة ألوان",
+        "6 outcomes {1, 2, 3, 4, 5, 6} · ستة نواتج",
+        "0 outcomes · لا توجد نواتج"
+      ],
+      "correct": 2,
+      "explanation": "A standard die has six numbered faces. Read the number on the top face after one roll: it can be 1, 2, 3, 4, 5, or 6. The sample space is S = {1,2,3,4,5,6}, and its size is 6. Write each possible result once. Two outcomes describe a coin, not this die. The color choices describe a different experiment. Zero outcomes would mean there is no possible result. For a fair die each single number has probability 1/6.\nللنرد العادي ستة أوجه مرقمة. نقرأ الوجه العلوي بعد رمية واحدة، وقد يظهر ١ أو ٢ أو ٣ أو ٤ أو ٥ أو ٦. فضاء العينة هو {١،٢،٣،٤،٥،٦} وعدد عناصره ٦. نكتب كل نتيجة مرة واحدة دون تكرار. النتيجتان تناسبان العملة، والألوان تجربة أخرى، وصفر نواتج لا يصف رمية نرد. في النرد العادل احتمال كل عدد محدد هو ١/٦."
+    }
+  ]
+}
