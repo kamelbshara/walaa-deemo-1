@@ -154,7 +154,7 @@ class Handler(SimpleHTTPRequestHandler):
         path = urlparse(self.path).path
         if path.startswith('/api/'):
             self.api('GET', path, {})
-        elif path in ('/', '/index.html', '/app.js', '/studio.js', '/style.css', '/dice-lab.html', '/lesson-plan.md', '/vendor/mathjax/tex-svg.js'):
+        elif path in ('/', '/index.html', '/app.js', '/studio.js', '/style.css', '/warm-theme.css', '/dice-lab.html', '/lesson-plan.md', '/vendor/mathjax/tex-svg.js'):
             super().do_GET()
         else:
             self.send_error(404)
