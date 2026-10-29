@@ -53,23 +53,23 @@ with sync_playwright() as p:
             s.screenshot(path=str(OUT/'story-dialogue-mobile.png'),full_page=True,animations='disabled')
             s.set_viewport_size({'width':1440,'height':1000})
         assert s.locator('#playNumerator').count()==0
-        s.locator('[data-story=talk]').click();s.locator('[data-story=talk]').click()
+        s.locator('[data-story=advance]').click();s.locator('[data-story=advance]').click()
         if kind=='spinner':s.locator('[data-play=red][data-red="3"]').click()
         assert s.locator('[data-play=trial][data-count="1"]').is_disabled()
         s.locator('[data-play=predict][data-prediction=yes]').click()
         s.locator('[data-play=trial][data-count="1"]').click()
         s.wait_for_function('!playBusy')
         assert s.evaluate('JSON.parse(playRecord().counts).reduce((a,b)=>a+b,0)')==1
-        s.locator('[data-story=next]').click()
+        s.locator('[data-story=advance]').click()
         s.locator('[data-story=count]').click()
         s.wait_for_function('state.journey.selection_error===1')
         for i in selection:s.locator(f'[data-play=select][data-index="{i}"]').click()
         s.locator('[data-story=count]').click()
         s.wait_for_function('storyScene===3')
         assert s.locator('.story-equation').count()==0
-        s.locator('[data-story=reveal]').click();s.locator('[data-story=reveal]').click()
+        s.locator('[data-story=advance]').click();s.locator('[data-story=advance]').click()
         s.wait_for_selector('.story-equation mjx-container svg')
-        s.locator('[data-story=reveal]').click()
+        s.locator('[data-story=advance]').click()
         s.wait_for_function('state.journey.scene===4')
         s.reload();s.wait_for_selector('#playNumerator')
         assert s.evaluate('playKind')==kind
@@ -77,7 +77,7 @@ with sync_playwright() as p:
         s.locator('[data-play=check]').click();s.wait_for_selector('.mission-retry')
         assert s.locator('#playNumerator').count()==0
         s.locator('[data-story=explain]').click()
-        for _ in range(3):s.locator('[data-story=reveal]').click()
+        for _ in range(3):s.locator('[data-story=advance]').click()
         s.locator('#playNumerator').fill(str(n));s.locator('#playDenominator').fill(str(d))
         s.locator('[data-play=check]').click();s.wait_for_selector('.mission-won')
     assert s.evaluate('playWins()')==3
