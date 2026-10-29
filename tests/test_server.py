@@ -95,6 +95,23 @@ class ClassroomTest(unittest.TestCase):
         row=self.req(s,'state')['student'];self.assertEqual(row['slide'],6);self.assertEqual(row['poll'],2);self.assertEqual(row['coin'],1);self.assertIn(6,json.loads(row['visited']))
         self.req(s,'logout',{})
         with self.assertRaises(urllib.error.HTTPError):self.req(s,'state')
+    def test_worked_examples_progress_and_validation(self):
+        s,t=self.student(),self.teacher()
+        sid=self.req(s,'state')['student']['id']
+        for kind,answer in [('coin','1/2'),('dice','3/6'),('spinner','1/4')]:
+            for step in range(5):self.req(s,'explore',{'kind':kind,'step':step})
+            wrong=self.req(s,'explore',{'kind':kind,'step':4,'answer':'0'})
+            self.assertFalse(wrong['answerCorrect'])
+            right=self.req(s,'explore',{'kind':kind,'step':4,'answer':answer})
+            self.assertTrue(right['answerCorrect'])
+            self.assertEqual(right['exploration']['tries'],2)
+            self.assertEqual(len(json.loads(right['exploration']['seen'])),5)
+        self.assertEqual(len(self.req(s,'state')['explorations']),3)
+        observed=[e for e in self.req(t,'dashboard')['explorations'] if e['student']==sid]
+        self.assertEqual(len(observed),3)
+        self.assertTrue(all(e['correct']==1 for e in observed))
+        with self.assertRaises(urllib.error.HTTPError):self.req(s,'explore',{'kind':'invalid','step':0})
+
     def test_bank_integrity_and_limits(self):
         self.assertEqual(len(server.BANK),37)
         for q in server.BANK:

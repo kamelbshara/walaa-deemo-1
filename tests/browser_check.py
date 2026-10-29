@@ -38,6 +38,22 @@ with sync_playwright() as p:
     s.goto(BASE);s.locator('[name=name]').fill('Mariam · مريم');s.locator('[name=code]').fill('WALAA9');s.locator('button[type=submit]').click();s.wait_for_selector('.cover')
     s.wait_for_timeout(400);s.screenshot(path=str(OUT/'student-cover.png'),full_page=True)
     assert s.locator('.cover').inner_text().find('Walaa Falah')==-1 # credit strip is separate
+    s.locator('[data-action=navigate][data-slide="2"]').click();s.wait_for_selector('.discovery-studio')
+    for kind,answer in [('coin','1/2'),('dice','3/6'),('spinner','1/4')]:
+        s.locator(f'[data-studio=example][data-kind="{kind}"]').click()
+        for step in range(1,5):
+            with s.expect_response(lambda r:'/api/explore' in r.url and r.request.method=='POST'):
+                s.locator(f'[data-studio=step][data-step="{step}"]').click()
+        s.wait_for_selector('.equation-build mjx-container svg')
+        s.locator(f'[data-studio=answer][data-answer="{answer}"]').click()
+        s.wait_for_function('(kind)=>state.explorations.some(e=>e.kind===kind&&e.correct)',arg=kind)
+    assert s.evaluate('state.explorations.length')==3
+    s.screenshot(path=str(OUT/'worked-studio.png'),full_page=True,animations='disabled')
+    s.set_viewport_size({'width':390,'height':844})
+    assert s.evaluate('document.documentElement.scrollWidth<=innerWidth')
+    s.screenshot(path=str(OUT/'worked-studio-mobile.png'),full_page=True,animations='disabled')
+    s.set_viewport_size({'width':1440,'height':1000})
+    s.locator('[data-action=navigate][data-slide="0"]').click();s.wait_for_selector('.cover')
     obj=s.locator('.cover-art .coin-obj');obj.focus();obj.press('ArrowRight');assert 'translate' in obj.get_attribute('style')
     s.locator('[data-action=thinking]').first.click();s.locator('#reasoning').fill('There are 2 equally likely outcomes, so P(heads) = 1/2.')
     canvas=s.locator('#thinkingCanvas').bounding_box();s.mouse.move(canvas['x']+20,canvas['y']+20);s.mouse.down();s.mouse.move(canvas['x']+130,canvas['y']+70,steps=8);s.mouse.up();s.locator('[data-action=save-work]').click();s.locator('[data-action=raise-hand]').click();s.wait_for_timeout(600)

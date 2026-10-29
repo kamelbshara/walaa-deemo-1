@@ -40,6 +40,7 @@ def initialize():
         CREATE TABLE IF NOT EXISTS attempts(id TEXT PRIMARY KEY, student TEXT, mode TEXT, questions TEXT, answers TEXT DEFAULT '[]', current_started REAL, finished INTEGER DEFAULT 0);
         CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
         CREATE TABLE IF NOT EXISTS work_samples(student TEXT, slide INTEGER, reasoning TEXT, strokes TEXT, updated REAL, PRIMARY KEY(student,slide));
+        CREATE TABLE IF NOT EXISTS explorations(student TEXT, kind TEXT, step INTEGER DEFAULT 0, seen TEXT DEFAULT '[0]', correct INTEGER DEFAULT 0, tries INTEGER DEFAULT 0, updated REAL, PRIMARY KEY(student,kind));
         CREATE TABLE IF NOT EXISTS reflections(id INTEGER PRIMARY KEY CHECK(id=1), content TEXT DEFAULT '');
         INSERT OR IGNORE INTO reflections VALUES(1,'');
         CREATE TABLE IF NOT EXISTS work(student TEXT PRIMARY KEY, reasoning TEXT DEFAULT '', strokes TEXT DEFAULT '[]', feedback TEXT DEFAULT '', help INTEGER DEFAULT 0, updated REAL);
@@ -153,7 +154,7 @@ class Handler(SimpleHTTPRequestHandler):
         path = urlparse(self.path).path
         if path.startswith('/api/'):
             self.api('GET', path, {})
-        elif path in ('/', '/index.html', '/app.js', '/style.css', '/dice-lab.html', '/lesson-plan.md', '/vendor/mathjax/tex-svg.js'):
+        elif path in ('/', '/index.html', '/app.js', '/studio.js', '/style.css', '/dice-lab.html', '/lesson-plan.md', '/vendor/mathjax/tex-svg.js'):
             super().do_GET()
         else:
             self.send_error(404)
@@ -223,14 +224,14 @@ class Handler(SimpleHTTPRequestHandler):
                     student = dict(db.execute('SELECT * FROM students WHERE id=?', (sid,)).fetchone())
                     attempts = [public_attempt(advance_expired(db, a)) for a in db.execute('SELECT * FROM attempts WHERE student=? ORDER BY rowid', (sid,)).fetchall()]
                     db.commit()
-                    return self.send_json(200, {'role':role,'student':student,'lesson':student_lesson(lesson),'attempts':attempts,'samples':[dict(w) for w in db.execute('SELECT * FROM work_samples WHERE student=?',(sid,))],'control':control,'work':dict(db.execute('SELECT * FROM work WHERE student=?',(sid,)).fetchone() or {})})
+                    return self.send_json(200, {'role':role,'student':student,'lesson':student_lesson(lesson),'attempts':attempts,'explorations':[dict(e) for e in db.execute('SELECT * FROM explorations WHERE student=?',(sid,))],'samples':[dict(w) for w in db.execute('SELECT * FROM work_samples WHERE student=?',(sid,))],'control':control,'work':dict(db.execute('SELECT * FROM work WHERE student=?',(sid,)).fetchone() or {})})
                 if role == 'teacher':
                     if path == '/api/dashboard' and method == 'GET':
                         rows = db.execute('SELECT * FROM attempts').fetchall()
                         attempts = [dict(advance_expired(db,a)) for a in rows]
                         students = [dict(s) for s in db.execute('SELECT * FROM students ORDER BY created')]
                         db.commit()
-                        return self.send_json(200, {'students':students,'attempts':[{'student':a['student'],**public_attempt(a)} for a in attempts], 'lesson':settings(db), 'serverNow':time.time()*1000, 'reflection':db.execute('SELECT content FROM reflections WHERE id=1').fetchone()[0], 'samples':[dict(w) for w in db.execute('SELECT * FROM work_samples')], 'work':[dict(w) for w in db.execute('SELECT * FROM work')], 'control':json.loads(db.execute("SELECT value FROM settings WHERE key='control'").fetchone()[0])})
+                        return self.send_json(200, {'students':students,'attempts':[{'student':a['student'],**public_attempt(a)} for a in attempts], 'lesson':settings(db), 'serverNow':time.time()*1000, 'explorations':[dict(e) for e in db.execute('SELECT * FROM explorations')], 'reflection':db.execute('SELECT content FROM reflections WHERE id=1').fetchone()[0], 'samples':[dict(w) for w in db.execute('SELECT * FROM work_samples')], 'work':[dict(w) for w in db.execute('SELECT * FROM work')], 'control':json.loads(db.execute("SELECT value FROM settings WHERE key='control'").fetchone()[0])})
                     if path == '/api/reflection' and method == 'POST':
                         db.execute('UPDATE reflections SET content=? WHERE id=1',(str(body.get('content',''))[:6000],))
                         db.commit()
@@ -304,6 +305,23 @@ class Handler(SimpleHTTPRequestHandler):
                         db.execute('INSERT OR REPLACE INTO work_samples VALUES(?,?,?,?,?)',(sid,page,str(body.get('reasoning',''))[:3000],json.dumps(strokes),time.time()))
                     db.commit()
                     return self.send_json(200,{'ok':True})
+                if path == '/api/explore' and method == 'POST':
+                    kind=body.get('kind'); step=int(body.get('step',0))
+                    if kind not in ('coin','dice','spinner') or step not in range(5):
+                        raise ValueError('Invalid example step.')
+                    db.execute('INSERT OR IGNORE INTO explorations(student,kind,updated) VALUES(?,?,?)',(sid,kind,time.time()))
+                    row=db.execute('SELECT * FROM explorations WHERE student=? AND kind=?',(sid,kind)).fetchone()
+                    seen=json.loads(row['seen'])
+                    if step not in seen:seen.append(step)
+                    correct=row['correct']; tries=row['tries']; answer_correct=None
+                    if 'answer' in body:
+                        if step!=4:raise ValueError('Complete the worked steps first.')
+                        answer_correct=body['answer']=={'coin':'1/2','dice':'3/6','spinner':'1/4'}[kind]
+                        correct=max(correct,int(answer_correct));tries+=1
+                    db.execute('UPDATE explorations SET step=?,seen=?,correct=?,tries=?,updated=? WHERE student=? AND kind=?',(step,json.dumps(seen),correct,tries,time.time(),sid,kind))
+                    result=dict(db.execute('SELECT * FROM explorations WHERE student=? AND kind=?',(sid,kind)).fetchone())
+                    db.commit()
+                    return self.send_json(200,{'exploration':result,'answerCorrect':answer_correct})
                 if path == '/api/progress' and method == 'POST':
                     slide = int(body.get('slide',0))
                     if slide not in range(8):

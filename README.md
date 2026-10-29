@@ -78,3 +78,9 @@ The new 4:10 video plus three feedback pauses needs more than the old 2-minute v
 ## Vercel deployment
 
 Vercel support is now provided by `api/index.py`, `vercel.json`, and `postgres_store.py`. It requires a durable PostgreSQL `DATABASE_URL` and a configured `TEACHER_PASSWORD`; SQLite is only used locally. See [DEPLOY_VERCEL.md](DEPLOY_VERCEL.md) for exact account setup, deployment commands, and verification. No public deployment has been created from this workspace.
+
+## Animated worked examples and achievement spectrum
+
+Slide 3 includes a five-stage bilingual exploration studio for a fair coin (heads), a fair die (even number), and a four-equal-sector spinner (one coral sector). Students can select examples, reveal/revisit steps, animate the walkthrough, inspect outcome chips, and answer a guided counting-fraction check. MathJax renders the full formula and simplification. Reduced-motion preferences are respected. Printable lesson materials include the three worked solutions.
+
+Exploration steps, check attempts, and successful checks persist in SQLite/PostgreSQL and appear in the teacher's live whole-lesson matrix. Eight badges have explicit criteria; participation badges do not imply mastery. The Formula Builder badge requires all five steps and a successful check in all three examples; the Mastery Star requires an independent mastery-game score of at least 80%. The dashboard updates approximately every four seconds while connected.
