@@ -51,7 +51,7 @@ with sync_playwright() as p:
     s.locator('[data-action=coin-answer][data-choice="1"]').click();s.wait_for_selector('#coinFeedback .feedback');assert 'Exactly' in s.locator('#coinFeedback').inner_text()
     # Test checkpoint UI with a controlled player double. Real YouTube is external.
     s.evaluate("""window.YT={Player:function(id,opts){this.getCurrentTime=()=>2;this.pauseVideo=()=>{};this.playVideo=()=>{};this.destroy=()=>{};setTimeout(()=>opts.events.onReady(),10)}}""")
-    s.locator('[data-action=navigate][data-slide="1"]').click();s.wait_for_selector('#modal:not([hidden])');s.locator('[data-action=video-answer][data-choice="1"]').click();s.wait_for_selector('[data-action=video-continue]');s.locator('[data-action=video-continue]').click();assert s.locator('#modal').is_hidden()
+    s.locator('[data-action=navigate][data-slide="1"]').click();s.wait_for_selector('#videoQuestion:not([hidden])');s.locator('[data-action=video-answer][data-choice="1"]').click();s.wait_for_selector('[data-action=video-continue]');s.locator('[data-action=video-continue]').click();assert s.locator('#videoQuestion').is_hidden()
     s.locator('[data-action=navigate][data-slide="4"]').click();s.locator('[data-action=start-game]').click();s.wait_for_selector('#timer')
     for i in range(10):
         s.wait_for_selector('[data-action=game-answer]')
@@ -84,13 +84,15 @@ with sync_playwright() as p:
     s.wait_for_function('window.clipConfig?.start===8 && window.clipConfig.end===258')
     for i,(absolute,answer) in enumerate([(113,1),(223,0),(235,2)]):
         s.evaluate('(t)=>window.clipTime=t',absolute)
-        s.wait_for_selector('#modal:not([hidden])')
+        s.wait_for_selector('#videoQuestion:not([hidden])')
         assert s.evaluate('window.clipPaused')
-        assert s.locator('#modal .option').count()==(2 if i==0 else 4)
+        assert s.locator('.video-screen #videoQuestion').is_visible()
+        assert s.locator('#modal').is_hidden()
+        assert s.locator('#videoQuestion .option').count()==(2 if i==0 else 4)
         s.locator(f'[data-action=video-answer][data-choice="{answer}"]').click()
         s.wait_for_selector('[data-action=video-continue]')
         if i==0:
-            s.wait_for_function('!window.clipPaused && document.querySelector("#modal").hidden',timeout=16000)
+            s.wait_for_function('!window.clipPaused && document.querySelector("#videoQuestion").hidden',timeout=16000)
         else:s.locator('[data-action=video-continue]').click()
     s.evaluate('window.clipTime=258');s.wait_for_function('window.clipPaused')
     assert 'Segment complete' in s.locator('#videoStatus').inner_text()
